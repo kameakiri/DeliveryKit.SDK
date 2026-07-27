@@ -8,7 +8,7 @@ class Program
     static void Main()
     {
         string basePath = @"C:\DeliveryKit\Api\Logs";
-        string archivePath = @"C:\DeliveryKit\Api\LogsArchive";
+        string archivePath = @"ログ削除の場所";
 
         int days = 180;
         DateTime threshold = DateTime.Now.AddDays(-days);
