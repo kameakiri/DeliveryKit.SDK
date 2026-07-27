@@ -22,7 +22,7 @@ public interface IDeliveryLogger
 ## Usage Example
 
 ```csharp
-var logger = new DeliveryLogger(@"C:\DeliveryKit\Api\Logs");
+var logger = new DeliveryLogger(@"ログを配置する場所");
 logger.Info("CreateDelivery called", new { orderId = "ORD-001" });
 
 ## Log Format
