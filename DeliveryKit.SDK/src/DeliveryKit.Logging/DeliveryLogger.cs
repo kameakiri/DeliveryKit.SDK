@@ -3,12 +3,11 @@ using System.Text.Json;
 
 public class DeliveryLogger : IDeliveryLogger
 {
-    private readonly string _basePath = @"C:\DeliveryKit\Api\Logs";
+    private readonly string _basePath = @"ログを配置する場所";
     private readonly string _category;
 
     private const long MaxSize = 1_000_000; // 1MB
 
-    // ★ 引数1つのコンストラクタを追加
     public DeliveryLogger(string category = "core")
     {
         _category = category;
