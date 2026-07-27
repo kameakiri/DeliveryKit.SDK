@@ -14,7 +14,7 @@ DeliveryKit.AI.Pipeline は、ログを AI モデルに投入するための前�
 ```csharp
 var preprocessor = new LogPreprocessor();
 var normalized = preprocessor.Normalize(
-    File.ReadLines(@"C:\DeliveryKit\Api\Logs\core\2026-07-26.log")
+    File.ReadLines(@"(ログを配置する場所)2026-07-26.log")
 );
 
 What Normalize() Does
