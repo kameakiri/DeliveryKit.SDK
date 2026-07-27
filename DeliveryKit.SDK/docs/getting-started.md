@@ -9,7 +9,7 @@ DeliveryKit.SDK をソリューションに追加し、API プロジェクトか
 ```csharp
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
 builder.Services.AddSingleton<IDeliveryLogger>(sp =>
-    new DeliveryLogger(@"C:\DeliveryKit\Api\Logs"));
+    new DeliveryLogger(@"ログを配置する場所"));
 
 ## 3. Use in Controller
 
