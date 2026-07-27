@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var logger = new DeliveryLogger(@"C:\DeliveryKit\Api\Logs");
+        var logger = new DeliveryLogger(@"ログを配置する場所");
         var service = new DeliveryService();
 
         var request = new CreateDeliveryRequest
