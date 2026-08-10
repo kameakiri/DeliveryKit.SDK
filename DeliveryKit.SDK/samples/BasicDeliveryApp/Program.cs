@@ -1,4 +1,4 @@
-﻿using DeliveryKit.Core;
+using DeliveryKit.Core;
 using DeliveryKit.Logging;
 
 namespace BasicDeliveryApp;
@@ -7,14 +7,32 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var logger = new DeliveryLogger(@"C:\DeliveryKit\Api\Logs");
+        // basePath省略時は実行ディレクトリ配下の "Logs"。
+        var logger = new DeliveryLogger(category: "sample");
         var service = new DeliveryService();
 
         var request = new CreateDeliveryRequest
         {
-            OrderId = "SAMPLE-001",
-            Address = "東京都千代田区",
-            RequestedDate = DateTime.Now
+            Address = "東京都千代田区1-1-1",
+            RecipientName = "山田太郎",
+            RecipientPhone = "090-0000-0000",
+            Order = new DeliveryOrderRequest
+            {
+                OrderId = "SAMPLE-001",
+                SenderName = "サンプル株式会社",
+                SenderAddress = "大阪府大阪市1-1-1",
+                RecipientName = "山田太郎",
+                RecipientAddress = "東京都千代田区1-1-1",
+                RequestedDeliveryDate = DateTime.UtcNow
+            },
+            Package = new DeliveryPackageRequest
+            {
+                Weight = 1.5m,
+                Height = 20,
+                Width = 15,
+                Depth = 10,
+                Description = "サンプル荷物"
+            }
         };
 
         logger.Info("Sample app: CreateDelivery called", new { request });
@@ -22,6 +40,7 @@ public class Program
         var result = service.CreateDelivery(request);
 
         Console.WriteLine($"Success: {result.Success}");
-        Console.WriteLine($"DeliveryId: {result.Delivery?.DeliveryId}");
+        Console.WriteLine($"Message: {result.Message}");
+        Console.WriteLine($"DeliveryId: {result.Delivery?.Id}");
     }
 }

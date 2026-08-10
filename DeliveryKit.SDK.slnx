@@ -1,3 +1,7 @@
 <Solution>
-  <Project Path="DeliveryKit.SDK/DeliveryKit.SDK.csproj" />
+  <Project Path="DeliveryKit.SDK/src/DeliveryKit.Core/DeliveryKit.Core.csproj" />
+  <Project Path="DeliveryKit.SDK/src/DeliveryKit.Logging/DeliveryKit.Logging.csproj" />
+  <Project Path="DeliveryKit.SDK/src/DeliveryKit.LogArchiver/DeliveryKit.LogArchiver.csproj" />
+  <Project Path="DeliveryKit.SDK/src/DeliveryKit.AI.Pipeline/DeliveryKit.AI.Pipeline.csproj" />
+  <Project Path="DeliveryKit.SDK/samples/BasicDeliveryApp/BasicDeliveryApp.csproj" />
 </Solution>

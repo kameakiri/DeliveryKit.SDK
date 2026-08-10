@@ -22,7 +22,10 @@ public interface IDeliveryLogger
 ## Usage Example
 
 ```csharp
-var logger = new DeliveryLogger(@"C:\DeliveryKit\Api\Logs");
+// 第1引数（出力先ディレクトリ）は省略可。省略時は実行ディレクトリ配下の "Logs"。
+// 特定ドライブ・特定ユーザー構成の絶対パスを前提にすると配布先の環境で
+// 動かなくなるため、固定の絶対パスはハードコードしないこと。
+var logger = new DeliveryLogger(category: "api");
 logger.Info("CreateDelivery called", new { orderId = "ORD-001" });
 
 ## Log Format

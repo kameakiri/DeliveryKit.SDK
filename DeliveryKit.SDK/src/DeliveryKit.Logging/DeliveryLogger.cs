@@ -3,14 +3,20 @@ using System.Text.Json;
 
 public class DeliveryLogger : IDeliveryLogger
 {
-    private readonly string _basePath = @"C:\DeliveryKit\Api\Logs";
+    private readonly string _basePath;
     private readonly string _category;
 
     private const long MaxSize = 1_000_000; // 1MB
 
-    // ★ 引数1つのコンストラクタを追加
-    public DeliveryLogger(string category = "core")
+    // 以前は basePath が C:\DeliveryKit\Api\Logs にハードコードされており、
+    // かつ唯一のコンストラクタ引数が実際には category にバインドされていたため
+    // （呼び出し側は basePath のつもりで渡していた＝サンプル内で既に矛盾していた）、
+    // basePath を渡しても無視される状態だった。
+    // 配布可能なSDKが特定ドライブ・特定ユーザー構成の絶対パスを前提にするのは
+    // そもそも不適切なため、既定値は実行ディレクトリ配下の相対パスにした。
+    public DeliveryLogger(string? basePath = null, string category = "core")
     {
+        _basePath = basePath ?? Path.Combine(AppContext.BaseDirectory, "Logs");
         _category = category;
     }
 

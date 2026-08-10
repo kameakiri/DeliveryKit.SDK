@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -6,11 +6,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- 以前は <None Include> でIDE上に見せているだけで、実際にはどのコードも
+       コンパイルに含まれていなかった（DeliveryKit.SDK.dll を参照しても中身が空）。
+       利用者が本プロジェクト（DeliveryKit.SDK）を1つ参照するだけで
+       Core/Logging/LogArchiver/AI.Pipeline 一式を使えるよう、実参照に修正。 -->
   <ItemGroup>
-    <None Include="src\deliverykit.ai.pipeline\DeliveryKit.AI.Pipeline.csproj" />
-    <None Include="src\deliverykit.core\DeliveryKit.Core.csproj" />
-    <None Include="src\deliverykit.logarchiver\DeliveryKit.LogArchiver.csproj" />
-    <None Include="src\deliverykit.logging\DeliveryKit.Logging.csproj" />
+    <ProjectReference Include="src\DeliveryKit.Core\DeliveryKit.Core.csproj" />
+    <ProjectReference Include="src\DeliveryKit.Logging\DeliveryKit.Logging.csproj" />
+    <ProjectReference Include="src\DeliveryKit.AI.Pipeline\DeliveryKit.AI.Pipeline.csproj" />
   </ItemGroup>
 
 </Project>
