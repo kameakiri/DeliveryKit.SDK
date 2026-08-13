@@ -18,6 +18,7 @@ public interface IDeliveryLogger
     void Warn(string message, object? data = null);
     void Error(string message, object? data = null);
 }
+```
 
 ## Usage Example
 
@@ -27,12 +28,15 @@ public interface IDeliveryLogger
 // 動かなくなるため、固定の絶対パスはハードコードしないこと。
 var logger = new DeliveryLogger(category: "api");
 logger.Info("CreateDelivery called", new { orderId = "ORD-001" });
+```
 
 ## Log Format
 
+```json
 {
   "Timestamp": "2026-07-26 17:10:00",
   "Level": "INFO",
   "Message": "CreateDelivery called",
   "Data": { "orderId": "ORD-001" }
 }
+```

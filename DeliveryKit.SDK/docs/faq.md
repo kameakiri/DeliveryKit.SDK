@@ -1,12 +1,11 @@
-# 📘 faq.md  
-（よくある質問）
-
-```md
 # FAQ
 
-## Q. DeliveryKit.ApiTemplate は公開する必要がありますか？
-A. いいえ。SDK の利用例として samples に置くのは OK ですが、  
-   API 本体は公開対象ではありません。
+## Q. DeliveryKit.ApiTemplate は公開されていますか？
+A. はい。このSDKの兄弟プロジェクトとして別リポジトリ（DeliveryKit.ApiTemplate）で
+   公開しています。JWT認証・`[Authorize]`・入力検証を最初から組み込んだ、
+   このSDKを使ったWeb APIの組み方一式のサンプルです。
+   弊社の配送システム本体（プラン別機能・複数キャリア連携・DB永続化・
+   IDOR対策を含むデータモデル等）は含みません。
 
 ## Q. ログは削除されますか？
 A. 削除されません。180日後に LogsArchive へ移動されます。

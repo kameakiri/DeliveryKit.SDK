@@ -16,17 +16,16 @@ var preprocessor = new LogPreprocessor();
 var normalized = preprocessor.Normalize(
     File.ReadLines(Path.Combine(AppContext.BaseDirectory, "Logs", "core", "2026-07-26.log"))
 );
+```
 
-What Normalize() Does
-Normalize() はログを AI 学習に使えるように最低限クリーンアップする処理です。
+## What Normalize() Does
 
-空行を除去
+`Normalize()` はログを AI 学習に使えるように最低限クリーンアップする処理です。
 
-空白だけの行を除去
-
-各行の前後の空白を Trim
-
-クリーンなログ行を返す
+- 空行を除去
+- 空白だけの行を除去
+- 各行の前後の空白を Trim
+- クリーンなログ行を返す
 
 ## 実装
 
@@ -39,12 +38,11 @@ public IEnumerable<string> Normalize(IEnumerable<string> logs)
         yield return line.Trim();
     }
 }
+```
+
 ## Purpose
 
-LLM 学習用のログ整形
-
-ノイズ除去
-
-時系列データの維持
-
-AI モデルが扱いやすいクリーンデータ生成
+- LLM 学習用のログ整形
+- ノイズ除去
+- 時系列データの維持
+- AI モデルが扱いやすいクリーンデータ生成

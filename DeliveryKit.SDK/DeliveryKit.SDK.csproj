@@ -4,6 +4,13 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- このプロジェクト自身はソースを持たず、Core/Logging/AI.Pipelineを束ねる
+         ファサードとしてのみ存在する。既定の暗黙コンパイル対象(**/*.cs)を有効の
+         ままにすると、直下のsrc/やsamples/配下（ProjectReference先と同じソース）
+         まで再帰的に拾ってしまい、参照先DLLの型とこのプロジェクトが直接コンパイル
+         した型が衝突する(CS0436)。このプロジェクトはProjectReferenceのみで完結する
+         ため、既定の自動収集を無効化する。 -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <!-- 以前は <None Include> でIDE上に見せているだけで、実際にはどのコードも

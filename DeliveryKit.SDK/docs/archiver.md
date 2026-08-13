@@ -1,7 +1,3 @@
-# 📘 archiver.md  
-（ログ隔離バッチ）
-
-```md
 # DeliveryKit.LogArchiver
 
 DeliveryKit.LogArchiver は、180日経過したログを安全に隔離するバッチ処理です。
@@ -29,4 +25,3 @@ DeliveryKit.LogArchiver.exe [basePath] [archivePath] [days]
 特定ドライブ・特定ユーザー構成の絶対パスをコード側にハードコードしないこと。
 
 Windows タスクスケジューラで 1 日 1 回実行することを推奨します。
-
