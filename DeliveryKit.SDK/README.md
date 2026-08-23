@@ -59,7 +59,10 @@ API プロジェクトから `DeliveryKit.SDK`（または個別に `DeliveryKit
 ### 2. Register Services (Program.cs)
 
 ```csharp
-builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+// 必ず Singleton で登録すること（Scopedにすると、リクエストのたびにこのインスタンスごと
+// 作り直され、内部の保存先が毎回空になって「作成した配送がGETで見つからない」という
+// 不具合になる。DeliveryService.csのコメント参照）。
+builder.Services.AddSingleton<IDeliveryService, DeliveryService>();
 builder.Services.AddSingleton<IDeliveryLogger>(sp =>
     new DeliveryLogger(Path.Combine(AppContext.BaseDirectory, "Logs")));
 ```
