@@ -29,19 +29,30 @@ public class DeliveryLogger : IDeliveryLogger
     public void Error(string message, object? data = null)
         => Write("error", "ERROR", message, data);
 
+    // 監査で発覚：docs/logging.mdは「日本時間（JST）でのタイムスタンプ」と謳っているが、
+    // 従来はDateTime.Now（実行環境のOSローカルタイムゾーン依存）をそのまま使っており、
+    // タイムゾーンをJSTに固定するロジックが無かった。Azure App Service等UTC既定の
+    // クラウド環境にデプロイすると、ドキュメント通りにはならずUTC（またはホストの設定
+    // 次第の別のタイムゾーン）でタイムスタンプが記録されてしまう。日本には夏時間が無く
+    // JSTは常にUTC+9で固定のため、TimeZoneInfoのID（Windowsは"Tokyo Standard Time"、
+    // Linuxは"Asia/Tokyo"でOS間で異なり、かつ最小構成コンテナではtzdata自体が無く
+    // TimeZoneNotFoundExceptionになり得る）に依存せず、UtcNowへの単純な+9時間で
+    // 求める（配布先の実行環境を問わず確実に動く）。
+    private static DateTime JstNow() => DateTime.UtcNow.AddHours(9);
+
     private void Write(string category, string level, string message, object? data)
     {
         var dir = Path.Combine(_basePath, category);
         Directory.CreateDirectory(dir);
 
-        var date = DateTime.Now.ToString("yyyy-MM-dd");
+        var date = JstNow().ToString("yyyy-MM-dd");
         var file = Path.Combine(dir, $"{date}.log");
 
         RotateIfNeeded(file);
 
         var json = JsonSerializer.Serialize(new
         {
-            Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+            Timestamp = JstNow().ToString("yyyy-MM-dd HH:mm:ss"),
             Level = level,
             Message = message,
             Data = data
@@ -57,7 +68,7 @@ public class DeliveryLogger : IDeliveryLogger
         var size = new FileInfo(file).Length;
         if (size < MaxSize) return;
 
-        var newName = file.Replace(".log", $"_{DateTime.Now:HHmmss}.log");
+        var newName = file.Replace(".log", $"_{JstNow():HHmmss}.log");
         File.Move(file, newName);
     }
 }
