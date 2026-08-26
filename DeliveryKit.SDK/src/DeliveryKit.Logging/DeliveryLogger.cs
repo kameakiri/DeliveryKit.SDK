@@ -40,15 +40,24 @@ public class DeliveryLogger : IDeliveryLogger
     // 求める（配布先の実行環境を問わず確実に動く）。
     private static DateTime JstNow() => DateTime.UtcNow.AddHours(9);
 
+    // 内部基盤(DeliveryKit.Log.LogWriter)で実際に発生・修正済みのレースと同種の不備が
+    // このサンプルSDKには残っていた（監査で発覚）: docs/getting-started.mdはIDeliveryLogger
+    // をAddSingletonで登録するよう案内しており、1プロセス内の全リクエストが同一インスタンス・
+    // 同一ログファイルを共有する構成を推奨している。File.AppendAllTextは排他制御を一切
+    // 行わないため、複数リクエストが同時に同じカテゴリ・同日のログファイルへ書き込もうと
+    // するとIOException（ファイルロック競合）が発生し得る。ローテーション判定（サイズ確認→
+    // リネーム）だけロックしても、判定後にもう一方のスレッドが書き込んでからロックしては
+    // 意味が無いため、ディレクトリ作成からローテーション・書き込みまでを一連の排他区間にする
+    // （LogWriter.Writeと同じ方針）。
+    //
+    // 既知の制約: このロックは.NETプロセス内でのみ有効。複数プロセスが同じログファイル
+    // パスへ同時に書き込む構成には効かない（LogWriter.csの同種コメント、docs/logging.mdの
+    // 追記参照）。
+    private static readonly object WriteLock = new();
+
     private void Write(string category, string level, string message, object? data)
     {
         var dir = Path.Combine(_basePath, category);
-        Directory.CreateDirectory(dir);
-
-        var date = JstNow().ToString("yyyy-MM-dd");
-        var file = Path.Combine(dir, $"{date}.log");
-
-        RotateIfNeeded(file);
 
         var json = JsonSerializer.Serialize(new
         {
@@ -58,7 +67,17 @@ public class DeliveryLogger : IDeliveryLogger
             Data = data
         });
 
-        File.AppendAllText(file, json + Environment.NewLine);
+        lock (WriteLock)
+        {
+            Directory.CreateDirectory(dir);
+
+            var date = JstNow().ToString("yyyy-MM-dd");
+            var file = Path.Combine(dir, $"{date}.log");
+
+            RotateIfNeeded(file);
+
+            File.AppendAllText(file, json + Environment.NewLine);
+        }
     }
 
     private void RotateIfNeeded(string file)
