@@ -35,7 +35,11 @@ public class Program
             }
         };
 
-        logger.Info("Sample app: CreateDelivery called", new { request });
+        // 監査で発覚：request全体（住所・受取人氏名・電話番号等）をそのままログへ書き込むと、
+        // このサンプル自体は固定のダミーデータだが、複製先で実データに差し替えられた際に
+        // PIIをログへ平文で残す実装がそのままコピーされてしまう（DeliveryKit.ApiTemplate.
+        // Controllers.DeliveryControllerと同じ理由・同じ修正）。
+        logger.Info("Sample app: CreateDelivery called", new { orderId = request.Order.OrderId });
 
         var result = service.CreateDelivery(request);
 

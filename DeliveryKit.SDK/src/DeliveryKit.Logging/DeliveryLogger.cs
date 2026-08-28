@@ -80,6 +80,13 @@ public class DeliveryLogger : IDeliveryLogger
         }
     }
 
+    // 監査で発覚：内部基盤(DeliveryKit.Log.LogWriter)は"_1.log, _2.log..."のように
+    // 空き名をインクリメントしながら探すが、このサンプルSDKは秒単位の時刻
+    // （_HHmmss.log）をそのまま使っており空き名チェックが無かった。同一カテゴリ・
+    // 同一秒内に1MB超のログが2回以上ローテーションされる状況（高頻度ログ出力の
+    // バースト等）では、2回目のFile.Moveが既存の同名ファイルに対して例外を投げうる
+    // （WriteLock保持中のため例外は呼び出し元へそのまま伝播する）。LogWriter.Writeと
+    // 同じ「空き名が見つかるまで探す」方式に揃える。
     private void RotateIfNeeded(string file)
     {
         if (!File.Exists(file)) return;
@@ -87,7 +94,15 @@ public class DeliveryLogger : IDeliveryLogger
         var size = new FileInfo(file).Length;
         if (size < MaxSize) return;
 
-        var newName = file.Replace(".log", $"_{JstNow():HHmmss}.log");
+        var index = 1;
+        string newName;
+        do
+        {
+            newName = file.Replace(".log", $"_{JstNow():HHmmss}_{index}.log");
+            index++;
+        }
+        while (File.Exists(newName));
+
         File.Move(file, newName);
     }
 }
