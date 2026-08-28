@@ -67,16 +67,33 @@ public class DeliveryLogger : IDeliveryLogger
             Data = data
         });
 
-        lock (WriteLock)
+        // 監査で発覚：内部基盤(DeliveryKit.Log.LogWriter)と同じ理由（ディスク容量枯渇・
+        // 一時的なファイルロック等）でIOExceptionが起きると、呼び出し元のコントローラーの
+        // 例外処理の最終段でこのメソッドを呼んでいる場合、本来返すはずだった応答すら
+        // 返せない未処理例外に化けてしまう。ログ書き込み自体の失敗は、呼び出し元の実際の
+        // 応答を壊してまで伝播させる価値が無いため、握りつぶしベストエフォートで
+        // Console.Errorへ回す（LogWriter.Writeと同じ方針）。
+        try
         {
-            Directory.CreateDirectory(dir);
+            lock (WriteLock)
+            {
+                Directory.CreateDirectory(dir);
 
-            var date = JstNow().ToString("yyyy-MM-dd");
-            var file = Path.Combine(dir, $"{date}.log");
+                var date = JstNow().ToString("yyyy-MM-dd");
+                var file = Path.Combine(dir, $"{date}.log");
 
-            RotateIfNeeded(file);
+                RotateIfNeeded(file);
 
-            File.AppendAllText(file, json + Environment.NewLine);
+                File.AppendAllText(file, json + Environment.NewLine);
+            }
+        }
+        catch (IOException)
+        {
+            Console.Error.WriteLine($"[DeliveryKit.Logging] ログの書き込みに失敗しました（category={category}）。");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"[DeliveryKit.Logging] ログの書き込みに失敗しました（category={category}）。");
         }
     }
 
