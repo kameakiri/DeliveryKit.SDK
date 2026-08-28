@@ -104,6 +104,12 @@ public class DeliveryLogger : IDeliveryLogger
     // バースト等）では、2回目のFile.Moveが既存の同名ファイルに対して例外を投げうる
     // （WriteLock保持中のため例外は呼び出し元へそのまま伝播する）。LogWriter.Writeと
     // 同じ「空き名が見つかるまで探す」方式に揃える。
+    //
+    // 続けて発覚（自己レビュー）：file.Replace(".log", ...)は文字列中の全ての".log"
+    // 部分文字列を置換するため、basePathにたまたま".log"を含むディレクトリ名
+    // （例: "D:\App.log.old\Logs"）が渡された場合、意図しない箇所まで置換されうる。
+    // LogWriter.cs（同種の修正箇所）はPath.Combineで直接パスを組み立てており、この
+    // 問題を回避している。同じ組み立て方式に揃える。
     private void RotateIfNeeded(string file)
     {
         if (!File.Exists(file)) return;
@@ -111,11 +117,14 @@ public class DeliveryLogger : IDeliveryLogger
         var size = new FileInfo(file).Length;
         if (size < MaxSize) return;
 
+        var dir = Path.GetDirectoryName(file) ?? string.Empty;
+        var baseName = Path.GetFileNameWithoutExtension(file);
+
         var index = 1;
         string newName;
         do
         {
-            newName = file.Replace(".log", $"_{JstNow():HHmmss}_{index}.log");
+            newName = Path.Combine(dir, $"{baseName}_{JstNow():HHmmss}_{index}.log");
             index++;
         }
         while (File.Exists(newName));
