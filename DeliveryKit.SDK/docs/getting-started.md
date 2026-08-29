@@ -39,7 +39,11 @@ public class DeliveryController : ControllerBase
     [HttpPost("create")]
     public IActionResult CreateDelivery([FromBody] CreateDeliveryRequest request)
     {
-        _logger.Info("CreateDelivery called", new { request });
+        // requestオブジェクト全体（住所・受取人氏名・電話番号などPII）をそのまま
+        // ログに書き込まない。記録するのは追跡に必要な最小限の項目（例: orderId）に
+        // 限定する（DeliveryKit.ApiTemplate.Controllers.DeliveryControllerと同じ方針）。
+        var orderId = request.Order?.OrderId;
+        _logger.Info("CreateDelivery called", new { orderId });
         var result = _deliveryService.CreateDelivery(request);
         return result.Success ? Ok(result) : BadRequest(result);
     }
