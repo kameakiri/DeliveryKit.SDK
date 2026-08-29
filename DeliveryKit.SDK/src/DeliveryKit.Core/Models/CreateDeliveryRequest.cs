@@ -13,6 +13,12 @@ public class CreateDeliveryRequest
     public string? Notes { get; set; }
     public DeliveryOrderRequest Order { get; set; } = new();
     public DeliveryPackageRequest Package { get; set; } = new();
+
+    // 監査で発覚（High）：このテンプレートには冪等性キーが無く、二重クリックや
+    // ネットワーク再送で同じ配送が複数作成され得た。本家DeliveryKit.Api.Controllers.
+    // DeliveryController.CreateDelivery（DeliveryDbService.AddIfNotExistsAsync）と
+    // 同じ方針で、クライアントが1操作ごとに生成するGuidを必須にする。
+    public Guid? IdempotencyKey { get; set; }
 }
 
 public class DeliveryOrderRequest

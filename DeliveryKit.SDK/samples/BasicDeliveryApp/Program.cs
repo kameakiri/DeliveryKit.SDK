@@ -32,7 +32,11 @@ public class Program
                 Width = 15,
                 Depth = 10,
                 Description = "サンプル荷物"
-            }
+            },
+            // 監査で発覚：CreateDeliveryRequest.IdempotencyKeyが必須化されたため、
+            // このサンプルも実際の呼び出し元（HTTPクライアント）と同じく1操作につき
+            // 1回生成したGuidを渡す（DeliveryController.CreateDelivery参照）。
+            IdempotencyKey = Guid.NewGuid()
         };
 
         // 監査で発覚：request全体（住所・受取人氏名・電話番号等）をそのままログへ書き込むと、

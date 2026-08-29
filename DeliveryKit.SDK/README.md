@@ -111,9 +111,14 @@ Authorization: Bearer <token>
     "width": 15,
     "depth": 10,
     "description": "サンプル荷物"
-  }
+  },
+  "idempotencyKey": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 }
 ```
+
+`idempotencyKey`はクライアントが1回の作成操作につき1回だけ生成するGuid。二重クリックや
+ネットワーク再送で同じリクエストが2回届いても、配送が重複作成されない（同じ配送が
+そのまま返る）。
 
 ## 📚 Documentation
 詳細は `docs` フォルダを参照してください。

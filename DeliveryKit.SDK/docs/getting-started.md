@@ -85,6 +85,9 @@ Authorization: Bearer <ログインで取得したtoken>
     "width": 15,
     "depth": 10,
     "description": "サンプル荷物"
-  }
+  },
+  "idempotencyKey": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 }
 ```
+
+`idempotencyKey`はクライアントが1回の作成操作につき1回だけ生成するGuid（README.md参照）。
