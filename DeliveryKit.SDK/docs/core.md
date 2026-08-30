@@ -31,7 +31,7 @@ public interface IDeliveryService
 ### Models
 
 - `CreateDeliveryRequest`（`Address`, `RecipientName`, `RecipientPhone`, `Notes?`,
-  `Order: DeliveryOrderRequest`, `Package: DeliveryPackageRequest`）
+  `Order: DeliveryOrderRequest`, `Package: DeliveryPackageRequest`, `IdempotencyKey: Guid?`）
 - `DeliveryOrderRequest`（`OrderId`, `SenderName`, `SenderAddress`, `RecipientName`,
   `RecipientAddress`, `RequestedDeliveryDate`）
 - `DeliveryPackageRequest`（`Weight`, `Height`, `Width`, `Depth`, `Description`）
@@ -43,6 +43,12 @@ public interface IDeliveryService
 
 ## Usage Example
 
+> 監査で発覚（Medium）：`CreateDeliveryRequest.IdempotencyKey`が必須化されたコミットで
+> README.md/docs/getting-started.mdのサンプルは追従済みだったが、このファイルだけ
+> 追従漏れしていた。`IdempotencyKey`を指定せずに呼ぶと`DeliveryValidationException`が
+> 投げられ`result.Success = false`になる（ネットワーク再送・二重クリックで同じ配送が
+> 2件作成されるのを防ぐための必須パラメータ）。
+
 ```csharp
 var service = new DeliveryService();
 
@@ -51,6 +57,7 @@ var result = service.CreateDelivery(new CreateDeliveryRequest
     Address = "東京都千代田区1-1-1",
     RecipientName = "山田太郎",
     RecipientPhone = "090-0000-0000",
+    IdempotencyKey = Guid.NewGuid(),
     Order = new DeliveryOrderRequest
     {
         OrderId = "ORD-001",
