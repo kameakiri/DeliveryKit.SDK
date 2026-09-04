@@ -1,0 +1,39 @@
+name: CI
+
+# 監査で発覚（Medium）：このリポジトリにはワークフローが一つも無く、**pushしても
+# 一切検証されない**状態だった。さらに、モジュールのCoreライブラリと違って
+# 他リポジトリのCIからビルドされることも無いため（全ワークフロー・Bicepを対象に
+# 参照を調べた結果、このリポジトリを参照しているものは0件）、コンパイルが壊れても
+# **誰も気づかない**。同種の抜けは共有ライブラリのDeliveryKit.Log、各モジュールの
+# Coreライブラリでも見つかっており、その横展開として追加する。
+#
+# 外部プロジェクト参照を持たないため兄弟リポジトリのcheckoutもCROSS_REPO_PATも不要
+# （PATの利用範囲を広げないこと自体が目的。DeliveryKit.Infraの
+# docs/deployment-runbook.mdでスコープ縮小が未対応課題として挙げられている）。
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# 他リポジトリのワークフローと同じく最小権限（contents: readのみ）を明示する。
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore & Build（外部連携用SDK）
+        run: |
+          dotnet restore
+          dotnet build --no-restore
