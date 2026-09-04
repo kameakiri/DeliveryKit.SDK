@@ -1,0 +1,16 @@
+# 監査で発覚（Medium）：同じSDK/配下のDeliveryKit.ApiTemplateには設定済みなのに、
+# 顧客提供物であるDeliveryKit.SDK本体だけが抜けていた（追加時の対象列挙漏れ）。
+# 顧客に配布するサンプルコードが古い脆弱な依存を参照したままになるのは、
+# 有料SaaSのベンダーセキュリティ評価で直接指摘されうる。
+# 既存の設定と同じ最小構成（自動マージはしない。PRの内容は都度レビューする運用）。
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/DeliveryKit.SDK"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
