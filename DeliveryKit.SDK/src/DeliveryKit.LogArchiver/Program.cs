@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 
 namespace DeliveryKit.LogArchiver;
@@ -37,16 +37,45 @@ class Program
                 continue;
 
             string archiveDir = Path.Combine(archivePath, category);
-            Directory.CreateDirectory(archiveDir);
 
             foreach (var file in Directory.GetFiles(dir, "*.log"))
             {
                 DateTime lastWrite = File.GetLastWriteTime(file);
 
-                if (lastWrite < threshold)
+                if (lastWrite >= threshold)
+                    continue;
+
+                try
                 {
+                    // 移動するファイルがあると分かってから作る。無条件に作ると、
+                    // 対象が1件も無いカテゴリにも空のフォルダが残る。
+                    Directory.CreateDirectory(archiveDir);
+
                     string dest = Path.Combine(archiveDir, Path.GetFileName(file));
+
+                    // 同名が既にある場合は移動しない。File.Move(file, dest) は
+                    // 上書きせず例外を投げるが、**中身を検証せず上書きするより、
+                    // 元ファイルを残して次回に回す方が安全**である。ログは追記専用で、
+                    // 無警告の消失が最も困る。
+                    if (File.Exists(dest))
+                    {
+                        Console.Error.WriteLine($"[LogArchiver] 同名のファイルが既にあるため移動しません: {dest}");
+                        continue;
+                    }
+
                     File.Move(file, dest);
+                }
+                catch (IOException ex)
+                {
+                    // **1ファイルの失敗で全体を止めない。** 書き込み中のログは
+                    // ロックされていて移動できないが、それは次回の実行で片付く。
+                    // ここで例外を投げると、後続のファイル・カテゴリが
+                    // まるごと未処理のまま残る。
+                    Console.Error.WriteLine($"[LogArchiver] 移動できませんでした（次回再試行します）: {file} - {ex.Message}");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Console.Error.WriteLine($"[LogArchiver] アクセスできませんでした: {file} - {ex.Message}");
                 }
             }
         }
