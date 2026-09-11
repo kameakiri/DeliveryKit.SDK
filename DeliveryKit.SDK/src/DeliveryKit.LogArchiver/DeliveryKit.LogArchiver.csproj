@@ -2,5 +2,9 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net10.0</TargetFramework>
+		<!-- 他の36プロジェクトはどちらも enable にしている。ここだけ未設定で、
+		     null許容の警告が出ない状態だった（ファイルI/Oを扱うツールなので効く）。 -->
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
 </Project>
