@@ -23,6 +23,36 @@ class Program
 
         int days = args.Length > 2 && int.TryParse(args[2], out var parsedDays) ? parsedDays : 180;
 
+        // 隔離したログを最終的に削除するまでの日数。
+        //
+        // 監査で発覚：このツールは「削除ではなく隔離」を売りにしているが、**隔離した先を
+        // 片付ける仕組みがどこにも無かった。** 毎日動かすほど LogsArchive だけが増え続け、
+        // 次の2つが起きる。
+        //  - ディスクが埋まる。App Service のようにローカルディスクが小さい実行環境では、
+        //    ログの置き場が満杯になった時点でアプリ自体が書き込みに失敗する。
+        //  - **ログに含まれる個人データが、事業者が利用者に約束した保存期間を越えて残る。**
+        //    「隔離済み」は「消した」ではない。約束した期間で消していると思い込んだまま
+        //    運用できてしまうのが、この構造のいちばん困るところだった。
+        //    （本体側の DeliveryKit.Log でも同じ不備が見つかり、隔離先の削除を足している。）
+        //
+        // 既定は 0（削除しない）で、これまでの動きを変えない。**明示的に指定したときだけ
+        // 削除する。** 既に動いている配布先で、更新した途端に黙ってログが消えるのは
+        // 「無警告の消失が最も困る」という下の方針に反する。
+        int purgeDays = args.Length > 3 && int.TryParse(args[3], out var parsedPurgeDays)
+            ? parsedPurgeDays
+            : int.TryParse(Environment.GetEnvironmentVariable("DELIVERYKIT_LOG_PURGE_DAYS"), out var envPurgeDays)
+              ? envPurgeDays
+              : 0;
+
+        // 隔離より早く削除する設定は、隔離という段階そのものを無意味にする（隔離される前に
+        // 消える）。設定ミスでログを失うより、削除しない方が安全なので無効として扱う。
+        if (purgeDays > 0 && purgeDays < days)
+        {
+            Console.Error.WriteLine(
+                $"[LogArchiver] 削除日数({purgeDays})が隔離日数({days})より短いため、削除は行いません。");
+            purgeDays = 0;
+        }
+
         DateTime threshold = DateTime.Now.AddDays(-days);
 
         string[] categories = { "core", "api", "error", "security", "audit", "access" };
@@ -76,6 +106,44 @@ class Program
                 catch (UnauthorizedAccessException ex)
                 {
                     Console.Error.WriteLine($"[LogArchiver] アクセスできませんでした: {file} - {ex.Message}");
+                }
+            }
+        }
+
+        if (purgeDays > 0)
+            PurgeExpired(archivePath, categories, DateTime.Now.AddDays(-purgeDays));
+    }
+
+    /// <summary>
+    /// 隔離先から、保存期間を過ぎたログを削除する。
+    ///
+    /// 隔離（File.Move）と同じく、1ファイルの失敗で全体を止めない。書き込み中・ロック中の
+    /// ファイルは次回の実行で片付く。
+    /// </summary>
+    static void PurgeExpired(string archivePath, string[] categories, DateTime purgeThreshold)
+    {
+        foreach (var category in categories)
+        {
+            string dir = Path.Combine(archivePath, category);
+            if (!Directory.Exists(dir))
+                continue;
+
+            foreach (var file in Directory.GetFiles(dir, "*.log"))
+            {
+                if (File.GetLastWriteTime(file) >= purgeThreshold)
+                    continue;
+
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (IOException ex)
+                {
+                    Console.Error.WriteLine($"[LogArchiver] 削除できませんでした（次回再試行します）: {file} - {ex.Message}");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Console.Error.WriteLine($"[LogArchiver] 削除できませんでした: {file} - {ex.Message}");
                 }
             }
         }
