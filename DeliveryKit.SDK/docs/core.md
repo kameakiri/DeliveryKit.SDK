@@ -11,8 +11,17 @@ DeliveryKit.Core は配送ロジックを提供する SDK コンポーネント�
 
 ## Features
 
-- 配送作成（`CreateDelivery`）：必須項目（`Address`/`RecipientName`/`RecipientPhone`）と
-  制御文字混入のチェックを行う
+- 配送作成（`CreateDelivery`）：必須項目と制御文字混入のチェックを行う
+  - 必須：`Address` / `RecipientName` / `RecipientPhone`、および注文の
+    `Order.OrderId` / `Order.SenderName` / `Order.SenderAddress` /
+    `Order.RecipientName` / `Order.RecipientAddress`
+    （`Order`は省略しても既定のインスタンスが入るため、**省略＝空の注文**になる。
+    本家APIと同じくここで弾く）
+  - 制御文字の拒否：上記に `Notes` と `Package.Description` を加えた文字列項目すべて。
+    送り状やログにそのまま出る値のため、改行等が混ざると表示崩れやログ改ざんの
+    起点になり得る（タブのみ許容）
+  - エラーは `DeliveryValidationException` として捕捉され、`result.Success = false`、
+    `result.Message` に `"フィールド名: 内容"` が入る（例外は外へ出ない）
 - 配送情報取得（`GetDelivery`）
 - メモリストアによる簡易管理（サンプル実装）
 

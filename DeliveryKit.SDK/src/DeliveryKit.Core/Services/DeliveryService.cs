@@ -86,6 +86,17 @@ public class DeliveryService : IDeliveryService
             : null;
     }
 
+    // 監査で発覚：**検証していたのは9つある文字列項目のうち3つだけだった。**
+    // 直下の Address / RecipientName / Notes は制御文字を弾いていたのに、
+    // すぐ隣の RecipientPhone と、Order / Package の中の文字列は素通りだった。
+    //
+    // このサンプルの狙いは「入力検証という型を示すこと」なので、一部だけ守って
+    // あると **読んだ人はそれを網羅だと受け取る。** 送り状にもログにも出る値で、
+    // 弾く対象になる理由は Address とまったく同じ。
+    //
+    // 必須項目は本家 DeliveryKit.Core の DeliveryService と揃えている
+    // （Address / RecipientName / RecipientPhone に加えて、注文の
+    //   OrderId / SenderName / SenderAddress / RecipientName / RecipientAddress）。
     private static void Validate(CreateDeliveryRequest request)
     {
         RequireNonEmpty(request.Address, nameof(request.Address));
@@ -94,7 +105,25 @@ public class DeliveryService : IDeliveryService
 
         RejectControlCharacters(request.Address, nameof(request.Address));
         RejectControlCharacters(request.RecipientName, nameof(request.RecipientName));
+        RejectControlCharacters(request.RecipientPhone, nameof(request.RecipientPhone));
         RejectControlCharacters(request.Notes, nameof(request.Notes));
+
+        // Order は `new()` が既定値なので、丸ごと省略しても null にはならない。
+        // 検証が無いと **送り主も届け先も空のまま「作成に成功しました」が返る。**
+        var order = request.Order;
+        RequireNonEmpty(order.OrderId, "Order.OrderId");
+        RequireNonEmpty(order.SenderName, "Order.SenderName");
+        RequireNonEmpty(order.SenderAddress, "Order.SenderAddress");
+        RequireNonEmpty(order.RecipientName, "Order.RecipientName");
+        RequireNonEmpty(order.RecipientAddress, "Order.RecipientAddress");
+
+        RejectControlCharacters(order.OrderId, "Order.OrderId");
+        RejectControlCharacters(order.SenderName, "Order.SenderName");
+        RejectControlCharacters(order.SenderAddress, "Order.SenderAddress");
+        RejectControlCharacters(order.RecipientName, "Order.RecipientName");
+        RejectControlCharacters(order.RecipientAddress, "Order.RecipientAddress");
+
+        RejectControlCharacters(request.Package.Description, "Package.Description");
 
         if (request.IdempotencyKey is null || request.IdempotencyKey == Guid.Empty)
             throw new DeliveryValidationException(

@@ -61,6 +61,15 @@
   Windowsタスクスケジューラを前提にできないLinuxコンテナやApp Service（Linux）では、
   誰も起動しないままログが無期限に溜まります。
 - READMEがUTF-16で保存されGitHubで文字化けしていたのを修正。
+- **`DeliveryService` の入力検証が、文字列項目9つのうち3つにしか効いていませんでした。**
+  `Address` / `RecipientName` / `Notes` は制御文字を弾いていたのに、すぐ隣の
+  `RecipientPhone` と `Order` / `Package` の中の文字列は素通りでした。加えて
+  `Order` は省略しても既定のインスタンスが入るため、**送り主も届け先も空のまま
+  「作成に成功しました」が返っていました。** 必須項目を本家APIと揃え
+  （`Order.OrderId` / `SenderName` / `SenderAddress` / `RecipientName` /
+  `RecipientAddress`）、制御文字の拒否を全文字列項目へ広げました。
+  入力検証の**型**を示すのがこのサンプルの役目なので、一部だけ守ってあると
+  読んだ人はそれを網羅として写します。
 - **`docs/ai.md` を実装に合わせて書き直しました。** 「AI 学習用のクリーンデータ生成」
   「LLM 学習用のログ整形」「ノイズ除去」「時系列データの維持」を Features / Purpose として
   挙げていましたが、`Normalize()` がしているのは**空行の除去と前後の空白の Trim だけ**で、
