@@ -55,7 +55,20 @@ class Program
 
         DateTime threshold = DateTime.Now.AddDays(-days);
 
-        string[] categories = { "core", "api", "error", "security", "audit", "access" };
+        // 走査するカテゴリ。
+        //
+        // 監査で発覚：以前はここに6つの名前を決め打ちしていた。ところが
+        // `DeliveryLogger` のカテゴリは**コンストラクタに渡した任意の文字列**で、
+        // 決まった一覧があるわけではない（docs/logging.md 参照）。
+        // 一覧に無い名前を使うと、**そのログだけ隔離も削除もされないまま
+        // 無期限に溜まり続ける。** しかも動かしている側からは、アーカイバが
+        // 毎回正常終了して見える。
+        //
+        // 出力先の直下にあるディレクトリを全て対象にする。中の `*.log` しか
+        // 触らないので、ログ以外のものが混ざっていても影響しない。
+        string[] categories = Directory.Exists(basePath)
+            ? Directory.GetDirectories(basePath).Select(Path.GetFileName).OfType<string>().ToArray()
+            : Array.Empty<string>();
 
         foreach (var category in categories)
         {
@@ -111,7 +124,15 @@ class Program
         }
 
         if (purgeDays > 0)
-            PurgeExpired(archivePath, categories, DateTime.Now.AddDays(-purgeDays));
+        {
+            // 隔離先のカテゴリは、出力先のそれと一致するとは限らない
+            // （使わなくなったカテゴリの隔離済みログが残っている場合など）。
+            // 隔離先の直下を改めて数える。
+            var archivedCategories = Directory.Exists(archivePath)
+                ? Directory.GetDirectories(archivePath).Select(Path.GetFileName).OfType<string>().ToArray()
+                : Array.Empty<string>();
+            PurgeExpired(archivePath, archivedCategories, DateTime.Now.AddDays(-purgeDays));
+        }
     }
 
     /// <summary>
