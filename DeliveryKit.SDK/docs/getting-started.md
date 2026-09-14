@@ -55,6 +55,11 @@ public class DeliveryController : ControllerBase
 
 ## 5. Test with curl（要: 事前にログインしてトークンを取得）
 
+> **下の資格情報は開発用の既定値です。** `DeliveryKit.ApiTemplate` は、
+> 開発環境以外で `Sample:Username` / `Sample:PasswordHash` が未設定のまま起動すると
+> **例外を投げて止まります**（ソース中の既定値をそのまま本番相当の環境で
+> 使わせないため）。動作確認を終えたら、環境変数等で自分の値を設定してください。
+
 ```
 POST /api/auth/login
 {

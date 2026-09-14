@@ -6,7 +6,17 @@ DeliveryKit.Logging は、配送システム向けのログ基盤です。
 
 - 1MB ローテーションログ
 - JSON 形式で統一
-- カテゴリ別ディレクトリ（core / api / error / audit / access）
+- カテゴリ別ディレクトリ
+
+  **カテゴリは固定ではありません（監査で発覚。以前はここに
+  「core / api / error / audit / access」と5つ挙げていました）。**
+  `DeliveryLogger` のコンストラクタに渡した文字列がそのままディレクトリ名になり、
+  `Info` / `Warn` はその名前、`Error` だけは常に `error` へ書きます。
+  用途ごとにインスタンスを分けてください（例: `new DeliveryLogger(category: "audit")`）。
+
+  なお `DeliveryKit.LogArchiver` が走査するのは
+  `core` / `api` / `error` / `security` / `audit` / `access` の6つです。
+  **これ以外の名前を使うと、隔離も削除もされません。**
 - 日本時間（JST）でのタイムスタンプ
 
 ## Interface
