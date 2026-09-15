@@ -61,6 +61,15 @@
   Windowsタスクスケジューラを前提にできないLinuxコンテナやApp Service（Linux）では、
   誰も起動しないままログが無期限に溜まります。
 - READMEがUTF-16で保存されGitHubで文字化けしていたのを修正。
+- `docs/getting-started.md` の4章を、直した2つに追随させました（監査で発覚）。
+  **`DeliveryResult.Field` を足したときも、入力検証を9項目へ広げたときも、
+  `docs/core.md` だけ直してこちらが残っていました。**
+  - サンプルが `return result.Success ? Ok(result) : BadRequest(result);` のままで、
+    **写すと同じエンドポイントから2つの形のエラーが返る**状態でした
+    （直したばかりの `DeliveryKit.ApiTemplate` と食い違います）。
+  - 検証の説明が「`Address`/`RecipientName`/`RecipientPhone`が空、または制御文字」の
+    ままで、**`Order` の5項目が必須になったこと**も、制御文字の拒否が
+    `RecipientPhone` と `Package.Description` へ広がったことも書いていませんでした。
 - **`DeliveryResult` に `Field` を追加しました。** 検証に失敗した項目の名前が
   入ります。これまでは `DeliveryValidationException.FieldName` を `Message` の
   先頭へ文字列として畳み込むだけで（`"Address: must not be empty."`）、

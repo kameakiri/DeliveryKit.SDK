@@ -45,13 +45,33 @@ public class DeliveryController : ControllerBase
         var orderId = request.Order?.OrderId;
         _logger.Info("CreateDelivery called", new { orderId });
         var result = _deliveryService.CreateDelivery(request);
-        return result.Success ? Ok(result) : BadRequest(result);
+        if (!result.Success)
+        {
+            // **失敗の形を1つにすること。** モデルのバインドに失敗した場合、
+            // ASP.NET はコントローラーへ入る前に応答を返す。`DeliveryKit.ApiTemplate`
+            // はそれを `{ error, field }` に揃えてあるので、こちらも同じ形で返す。
+            // `BadRequest(result)` と書くと `{ success, message, delivery }` になり、
+            // **同じエンドポイントから2つの形のエラーが返る。**
+            return BadRequest(new { error = result.Message, field = result.Field ?? string.Empty });
+        }
+        return Ok(result);
     }
 }
 ```
 
-`CreateDelivery`は`Address`/`RecipientName`/`RecipientPhone`が空、または制御文字を
-含む場合に`result.Success = false`を返します（`DeliveryValidationException`を内部で捕捉）。
+`CreateDelivery`が`result.Success = false`を返す条件（`DeliveryValidationException`を
+内部で捕捉）：
+
+- **必須項目が空**：`Address` / `RecipientName` / `RecipientPhone`、および
+  `Order.OrderId` / `Order.SenderName` / `Order.SenderAddress` /
+  `Order.RecipientName` / `Order.RecipientAddress`
+  （`Order`は省略しても既定のインスタンスが入るため、**省略＝空の注文**になります）
+- **制御文字を含む**：上記に `Notes` と `Package.Description` を加えた文字列項目すべて
+  （タブのみ許容）
+- **`IdempotencyKey` が未指定**（クライアントが1操作につき1つ生成するGuid）
+
+`result.Field` に項目名、`result.Message` に `"項目名: 内容"` が入ります。
+詳細は `docs/core.md`。
 
 ## 5. Test with curl（要: 事前にログインしてトークンを取得）
 
