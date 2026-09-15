@@ -16,7 +16,14 @@
   <!-- 以前は <None Include> でIDE上に見せているだけで、実際にはどのコードも
        コンパイルに含まれていなかった（DeliveryKit.SDK.dll を参照しても中身が空）。
        利用者が本プロジェクト（DeliveryKit.SDK）を1つ参照するだけで
-       Core/Logging/LogArchiver/AI.Pipeline 一式を使えるよう、実参照に修正。 -->
+       Core/Logging/AI.Pipeline を使えるよう、実参照に修正。
+
+       監査で発覚：このコメントは以前「Core/Logging/**LogArchiver**/AI.Pipeline
+       一式」と書いていたが、**LogArchiver は下の参照に入っていない。**
+       あちらは OutputType=Exe のコマンドラインツールで、ライブラリとして
+       参照するものではない（docs/archiver.md にある `dotnet run` で使う）。
+       入っていないのが正しく、コメントの方が間違っていた。
+       docs/architecture.md は最初から3つと書いてあり、そちらと食い違っていた。 -->
   <ItemGroup>
     <ProjectReference Include="src\DeliveryKit.Core\DeliveryKit.Core.csproj" />
     <ProjectReference Include="src\DeliveryKit.Logging\DeliveryKit.Logging.csproj" />

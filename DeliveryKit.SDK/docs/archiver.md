@@ -25,7 +25,12 @@ DeliveryKit.LogArchiver.exe [basePath] [archivePath] [days] [purgeDays]
 
 引数は省略可能。省略時は実行ディレクトリ配下の `Logs` / `LogsArchive`、保持期間180日を使う。
 環境変数 `DELIVERYKIT_LOG_PATH` / `DELIVERYKIT_LOG_ARCHIVE_PATH` / `DELIVERYKIT_LOG_PURGE_DAYS`
-でも上書きできる。特定ドライブ・特定ユーザー構成の絶対パスをコード側にハードコードしないこと。
+でも上書きできる（優先順位は 引数 → 環境変数 → 既定値）。
+特定ドライブ・特定ユーザー構成の絶対パスをコード側にハードコードしないこと。
+
+> **`days`（隔離までの日数）に環境変数はありません。** 引数で渡すか、既定の180日になります。
+> パスと削除日数だけ環境変数で渡せるので、「環境変数で全部設定できる」と読むと
+> 隔離日数だけ既定のままになります。
 
 Windows タスクスケジューラで 1 日 1 回実行することを推奨します。
 

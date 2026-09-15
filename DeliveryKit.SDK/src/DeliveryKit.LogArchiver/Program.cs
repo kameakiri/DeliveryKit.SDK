@@ -10,7 +10,14 @@ class Program
         // 配布可能なツールが特定ドライブの絶対パスを前提にするのは環境依存が強すぎるため、
         // 既定値は実行ディレクトリ配下の相対パスにし、環境変数／コマンドライン引数で
         // 上書きできるようにした（Windowsタスクスケジューラでの運用を想定）。
-        //   LogArchiver.exe [basePath] [archivePath] [days]
+        //   LogArchiver.exe [basePath] [archivePath] [days] [purgeDays]
+        //
+        // 監査で発覚：**この行は第4引数（purgeDays）を足したあとも3つのままだった。**
+        // docs/archiver.md は4つで書いてあり、ソースを読んだ人だけが
+        // 「削除の指定はできない」と受け取る。削除しない側へ倒れるので静かに外れる。
+        //
+        // 上書きの順番はどれも「引数 → 環境変数 → 既定値」。
+        // ただし **days（隔離までの日数）に環境変数は無い**（引数か既定の180日のみ）。
         string basePath = args.Length > 0
             ? args[0]
             : Environment.GetEnvironmentVariable("DELIVERYKIT_LOG_PATH")
