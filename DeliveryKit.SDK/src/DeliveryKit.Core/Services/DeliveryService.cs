@@ -1,4 +1,4 @@
-namespace DeliveryKit.Core;
+﻿namespace DeliveryKit.Core;
 
 // これはSDKサンプル用の簡易実装（インメモリ、DB永続化なし）である。
 // 弊社の実プロダクト（DeliveryKit.Core本体）にはプラン別機能・キャリア連携・
@@ -35,6 +35,9 @@ public class DeliveryService : IDeliveryService
             return new DeliveryResult
             {
                 Success = false,
+                // Field も入れる。API側が項目名を文字列から切り出さずに済む
+                // （DeliveryResult.Field のコメント参照）。
+                Field = ex.FieldName,
                 Message = $"{ex.FieldName}: {ex.Message}"
             };
         }

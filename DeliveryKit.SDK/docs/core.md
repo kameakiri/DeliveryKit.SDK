@@ -21,7 +21,10 @@ DeliveryKit.Core は配送ロジックを提供する SDK コンポーネント�
     送り状やログにそのまま出る値のため、改行等が混ざると表示崩れやログ改ざんの
     起点になり得る（タブのみ許容）
   - エラーは `DeliveryValidationException` として捕捉され、`result.Success = false`、
-    `result.Message` に `"フィールド名: 内容"` が入る（例外は外へ出ない）
+    `result.Message` に `"フィールド名: 内容"`、`result.Field` に項目名が入る
+    （例外は外へ出ない）。**Field は API から 400 を返すためのもの**で、
+    以前これが無かったために、テンプレートが同じエンドポイントから
+    2つの形のエラーを返していた（CHANGELOG 参照）
 - 配送情報取得（`GetDelivery`）
 - メモリストアによる簡易管理（サンプル実装）
 
@@ -45,7 +48,7 @@ public interface IDeliveryService
   `RecipientAddress`, `RequestedDeliveryDate`）
 - `DeliveryPackageRequest`（`Weight`, `Height`, `Width`, `Depth`, `Description`）
 - `DeliveryInfo`（保存済み配送情報。`Id`, 上記フィールド一式, `Status`, `CreatedAt`）
-- `DeliveryResult`（`Success`, `Message`, `Delivery`）
+- `DeliveryResult`（`Success`, `Message`, `Field`, `Delivery`）
 
 内部主キー（`Id`等）はリクエストDTOに含めていません。呼び出し側が指定した`Id`で
 既存データを上書きできてしまう問題（マスアサインメント）を構造的に防ぐためです。
@@ -88,6 +91,9 @@ var result = service.CreateDelivery(new CreateDeliveryRequest
 
 if (!result.Success)
 {
-    // result.Message に "フィールド名: エラー内容" が入る
+    // result.Message に "フィールド名: エラー内容"、result.Field に項目名が入る。
+    // **API から 400 を返すときは Field をそのまま使うこと。**
+    // Message から文字列を切り出す必要は無い（DeliveryKit.ApiTemplate の
+    // DeliveryController.CreateDelivery が `{ error, field }` で返している）。
 }
 ```
