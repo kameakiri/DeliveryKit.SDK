@@ -41,6 +41,24 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Directory.Build.props の Version と CHANGELOG.md の一番上の見出しが
+      # 一致していることを確かめる。片方だけ動かすと、利用者が見る番号と
+      # 変更内容の説明がずれる（この2つは別の場所に書かざるを得ないので、
+      # 機械で結びつける）。
+      - name: Check version matches CHANGELOG
+        run: |
+          version=$(grep -oPm1 '(?<=<Version>)[^<]+' Directory.Build.props)
+          changelog=$(grep -oPm1 '^## \K[0-9]+\.[0-9]+\.[0-9]+' DeliveryKit.SDK/CHANGELOG.md)
+          echo "[check-version] Directory.Build.props=$version CHANGELOG.md=$changelog"
+          if [ -z "$version" ] || [ -z "$changelog" ]; then
+            echo "[check-version] どちらかからバージョンを読み取れませんでした。" >&2
+            exit 1
+          fi
+          if [ "$version" != "$changelog" ]; then
+            echo "[check-version] 一致していません。CHANGELOG.md に見出しを足してから Directory.Build.props を合わせてください。" >&2
+            exit 1
+          fi
+
       - name: Restore & Build（外部連携用SDK）
         run: |
           dotnet restore
