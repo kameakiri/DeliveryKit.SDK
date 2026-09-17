@@ -51,6 +51,37 @@ logger.Info("CreateDelivery called", new { orderId = "ORD-001" });
 }
 ```
 
+## `data` に個人情報を渡さないこと（監査で発覚、docs追記）
+
+`Info` / `Warn` / `Error` の第2引数は**そのままJSONへ直列化されて、平文でディスクに残ります。**
+配送を扱う以上、手近にあるのは受取人の氏名・住所・電話番号です。
+`logger.Info("CreateDelivery called", request)` と書けば、それが丸ごと残ります。
+
+```csharp
+// 悪い例：リクエストをそのまま渡す
+logger.Info("CreateDelivery called", request);
+
+// 良い例：追跡に必要な識別子だけを渡す
+logger.Info("CreateDelivery called", new { orderId = request.OrderId });
+```
+
+外部APIの応答も同じです。**エラー応答の本文には、送った内容がそのまま
+返ってくることがあります**（400番台で「この住所は不正です」と住所ごと返す実装は珍しくない）。
+例外の `Message` に応答本文を混ぜてログへ流すと、そこから漏れます。
+本家のDeliveryKitでも同じことが起きており、応答本文をログ向けの文言から外し、
+例外の別プロパティへ分離して直しました。
+
+このSDKには次のものが**ありません**。
+
+- 個人情報を落とす仕組み（マスキング・項目の除外）
+- 保持期間の自動適用（`DeliveryKit.LogArchiver` を別に動かし、
+  さらに `purgeDays` を指定して初めて消えます。`archiver.md` 参照）
+- 暗号化（ファイルはそのまま読めます）
+
+つまり、**何を渡すかだけが唯一の防御**です。
+個人情報保護方針で「ログに氏名・住所は記録しません」と掲げる場合、
+その約束を守れるかどうかは呼び出し側の書き方だけで決まります。
+
 ## 制約（監査で発覚、docs追記）
 
 - `getting-started.md`が案内する通り`IDeliveryLogger`は`AddSingleton`で登録し、1プロセス内の
