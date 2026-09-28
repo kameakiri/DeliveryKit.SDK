@@ -63,3 +63,23 @@ jobs:
         run: |
           dotnet restore
           dotnet build --no-restore
+
+      # **サンプルは、通るだけでは意味が無い。**
+      #
+      # 同じワークスペースの DeliveryKit.ConsoleTest が、ビルドされないまま
+      # 3度腐った（ARCHITECTURE.md 19章）。そのうち2度は ILogger の登録漏れと
+      # 必須項目が空で検証に落ちるもので、**いずれもコンパイルは通っていた。**
+      # ここも直前のステップでビルドはしているが、一度も動かしていなかった。
+      #
+      # サンプルは外部の利用者が最初に写すものなので、
+      # 動かないまま配ると、写した先で同じところに引っかかる。
+      - name: Run the sample（samples/BasicDeliveryApp）
+        run: dotnet run --project DeliveryKit.SDK/samples/BasicDeliveryApp
+
+      # ログ整理ツールも起動だけ確かめる。
+      #
+      # **Logs フォルダが無い場所で動かす。** 対象が無ければ何も移さず何も消さずに
+      # 正常終了する作りで（実際に空のディレクトリで確認済み）、ここで見たいのは
+      # 「起動して最後まで進むか」だけ。消す側のロジックはこの経路では走らない。
+      - name: Smoke-run the log archiver（src/DeliveryKit.LogArchiver）
+        run: dotnet run --project DeliveryKit.SDK/src/DeliveryKit.LogArchiver
