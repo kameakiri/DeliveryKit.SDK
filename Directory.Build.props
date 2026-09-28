@@ -28,4 +28,20 @@
     事業者情報が固まった時点で、ここへまとめて足す。
   -->
 
+  <!--
+    コードスタイル分析（IDE****）をビルドで有効にする。
+
+    **.editorconfig とこのファイルは対で効く。** .editorconfig で
+    IDE0051/IDE0052（未使用のprivateメンバー）の重大度を警告へ上げても、
+    このプロパティが無いとIDE系アナライザ自体がビルドで動かないため
+    何も出ない（逆も同じ）。導入時に実際に未使用のprivateメソッドを入れ、
+    両方揃ったときだけ警告が出ることを確かめてある。
+
+    **この設定は全.NETリポジトリに同じものが置かれている。**
+    理由と注意は .editorconfig の冒頭を参照。
+  -->
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
 </Project>
