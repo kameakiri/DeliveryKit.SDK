@@ -1,47 +1,47 @@
-<Project>
-
-  <!--
-    SDK全体のバージョン。**CHANGELOG.md の一番上の見出しと同じ値にする。**
-
-    監査で発覚：**どのcsprojにもバージョンが入っていなかった。**
-    CHANGELOG.md は 0.1.0 / 0.2.0 / 0.3.0 と版を数えているのに、
-    `dotnet pack` が作るパッケージは既定の **1.0.0** になる。
-    番号が食い違うだけでなく、1.0.0 は「これ以上壊す変更はしない」という意味を持つ。
-    0.3.0 の見出しには破壊的変更が2件並んでおり、**言っていることと逆の合図**を
-    利用者へ出すことになる。
-
-    利用者はこの番号だけを見て「上げてよいか」を決める。CHANGELOGを読みに来るのは
-    番号が変わったあとである。
-
-    上げるときは CHANGELOG.md に見出しを足してからこの値を合わせる。
-    ci.yml が両者の一致を確かめるので、片方だけ変えるとCIが落ちる。
-  -->
-  <PropertyGroup>
-    <Version>0.3.0</Version>
-  </PropertyGroup>
-
-  <!--
-    公開に必要な残りのパッケージ情報（Authors / Company / PackageProjectUrl 等）は
-    **まだ入れていない。** 事業者情報（法人名・所在地・連絡先）が未確定のためで、
-    紹介サイトの利用規約・プライバシーポリシーが「【草案】…効力を持ちません」と
-    表示しているのと同じ理由による。架空の名前を入れて公開すると取り消せない。
-    事業者情報が固まった時点で、ここへまとめて足す。
-  -->
+﻿<Project>
 
   <!--
     コードスタイル分析（IDE****）をビルドで有効にする。
 
     **.editorconfig とこのファイルは対で効く。** .editorconfig で
-    IDE0051/IDE0052（未使用のprivateメンバー）の重大度を警告へ上げても、
-    このプロパティが無いとIDE系アナライザ自体がビルドで動かないため
-    何も出ない（逆も同じ）。導入時に実際に未使用のprivateメソッドを入れ、
-    両方揃ったときだけ警告が出ることを確かめてある。
+    IDE0051/IDE0052 の重大度を警告へ上げても、このプロパティが無いと
+    IDE系アナライザ自体がビルドで動かないため何も出ない（逆も同じ）。
+    導入時に実際に未使用のprivateメソッドを入れ、両方揃ったときだけ
+    警告が出ることを確かめてある。
 
-    **この設定は全.NETリポジトリに同じものが置かれている。**
+    **このファイルも全.NETリポジトリに同じものが置かれている。**
     理由と注意は .editorconfig の冒頭を参照。
   -->
   <PropertyGroup>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <!--
+    既知の脆弱性があるNuGetパッケージでビルドを落とす。
+
+    **以前は警告のままで、誰も見ていなかった（脆弱性の棚卸しで発覚）。**
+    NU1902/NU1903 は .NET 8 以降なら既定で出るが、警告はビルドを止めないので
+    CIのログに流れていくだけだった。実際 SixLabors.ImageSharp の勧告5件が
+    毎回出ていて、気づいたのは棚卸しで手元で脆弱なパッケージの一覧を
+    出したときである。JavaScript側も同じ状態で、
+    紹介サイトの本番依存に critical が溜まっていた
+    （DeliveryKit.E2ETest/scripts/check-npm-audit-baseline.mjs）。
+
+    NuGetAuditMode=all で推移的な依存も見る。**今この構成で問題が出るのは
+    PdfSharpCore 経由の ImageSharp だけで、それは据え置くと決めてある。**
+    据え置きは「NU1902 を全部黙らせる」ではなく、
+    **勧告のURLを1件ずつ NuGetAuditSuppress で指名して**行う
+    （DeliveryKit.Api.csproj 参照）。そうしないと、同じプロジェクトに
+    将来別の脆弱なパッケージが入ったときに一緒に黙る。
+
+    落ちたときは、まず上げられるか確かめること。上げられない場合は
+    **なぜ安全なのかを csproj に書いてから**勧告を指名して抑制する。
+  -->
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
   </PropertyGroup>
 
 </Project>
