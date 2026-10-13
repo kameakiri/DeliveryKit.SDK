@@ -1,3 +1,33 @@
+## 0.4.0
+
+**この版は 0.3.0 から利用者のコードに影響する変更を含みます。**
+
+### 破壊的変更
+
+- **`CreateDeliveryRequest` の形を、本家APIの現在の形へ揃えました（1便＝複数の届け先）。**
+  受取人・住所・荷物は**届け先ごと**になり、送り主・注文番号・希望配送日は便に1つです。
+
+  ```
+  変更前: { address, recipientName, recipientPhone, order: {...}, package: {...} }
+  変更後: { orderId, senderName, senderAddress, requestedDeliveryDate,
+            destinations: [ { recipientName, recipientPhone, address, packages: [...] } ] }
+  ```
+
+  本家は2026-09に「配送1件が届け先を複数持つ」形へ変わっていました。**SDKがそれに
+  追従しておらず、「本家APIと同じ形に揃えている」と書いたまま違う形を配っていました**
+  （監査で発覚）。古い形で本家の `/api/delivery/create` を呼ぶと
+  「届け先を1つ以上指定してください。」（field: `destinations`）で弾かれます。
+
+  - `DeliveryOrderRequest` は無くなりました（中身は便と届け先へ分かれました）
+  - `CreateDeliveryDestinationRequest` が増えました
+  - `DeliveryInfo` も届け先の一覧（`Destinations`）を持ちます。
+    **回る順番（`SequenceNumber`）は受け取った配列の順にサーバーが振ります**
+  - 検証の項目名が `Destinations[0].Address` の形になりました
+    （画面がどの欄を赤くするかを決められるようにするため）
+
+- **`DeliveryKit.ApiTemplate` のログ出力**が、注文番号と**届け先の件数**を書くように
+  なりました（PIIは書きません。件数は取り違えにいちばん早く気づける値です）。
+
 ## 0.3.0
 
 **この版は 0.2.0 から利用者のコードに影響する変更を含みます。**

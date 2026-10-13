@@ -88,8 +88,9 @@ public IActionResult CreateDelivery([FromBody] CreateDeliveryRequest request)
     // requestオブジェクト全体（住所・受取人氏名・電話番号などPII）をそのまま
     // ログに書き込まない。記録するのは追跡に必要な最小限の項目（例: orderId）に
     // 限定する（DeliveryKit.ApiTemplate.Controllers.DeliveryControllerと同じ方針）。
-    var orderId = request.Order?.OrderId;
-    _logger.Info("CreateDelivery called", new { orderId });
+    var orderId = request.OrderId;
+    _logger.Info("CreateDelivery called",
+        new { orderId, destinations = request.Destinations?.Count ?? 0 });
     var result = _deliveryService.CreateDelivery(request);
     return result.Success ? Ok(result) : BadRequest(result);
 }
@@ -102,24 +103,30 @@ POST /api/delivery/create
 Authorization: Bearer <token>
 
 {
-  "address": "東京都千代田区1-1-1",
-  "recipientName": "山田太郎",
-  "recipientPhone": "090-0000-0000",
-  "order": {
-    "orderId": "ORD-001",
-    "senderName": "サンプル株式会社",
-    "senderAddress": "大阪府大阪市1-1-1",
-    "recipientName": "山田太郎",
-    "recipientAddress": "東京都千代田区1-1-1",
-    "requestedDeliveryDate": "2026-07-26T10:00:00"
-  },
-  "package": {
-    "weight": 1.5,
-    "height": 20,
-    "width": 15,
-    "depth": 10,
-    "description": "サンプル荷物"
-  },
+  "orderId": "ORD-001",
+  "senderName": "サンプル株式会社",
+  "senderAddress": "大阪府大阪市1-1-1",
+  "requestedDeliveryDate": "2026-07-26T10:00:00",
+  "notes": "午前中の配達希望",
+  "destinations": [
+    {
+      "recipientName": "山田太郎",
+      "recipientPhone": "090-0000-0000",
+      "address": "東京都千代田区1-1-1",
+      "packages": [
+        { "weight": 1.5, "height": 20, "width": 15, "depth": 10, "description": "サンプル荷物" }
+      ]
+    },
+    {
+      "recipientName": "鈴木花子",
+      "recipientPhone": "090-1111-1111",
+      "address": "東京都千代田区2-2-2",
+      "notes": "不在時は宅配ボックス",
+      "packages": [
+        { "weight": 0.8, "height": 10, "width": 10, "depth": 5, "description": "サンプル荷物2" }
+      ]
+    }
+  ],
   "idempotencyKey": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 }
 ```

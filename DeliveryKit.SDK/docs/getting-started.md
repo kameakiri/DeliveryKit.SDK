@@ -42,8 +42,9 @@ public class DeliveryController : ControllerBase
         // requestオブジェクト全体（住所・受取人氏名・電話番号などPII）をそのまま
         // ログに書き込まない。記録するのは追跡に必要な最小限の項目（例: orderId）に
         // 限定する（DeliveryKit.ApiTemplate.Controllers.DeliveryControllerと同じ方針）。
-        var orderId = request.Order?.OrderId;
-        _logger.Info("CreateDelivery called", new { orderId });
+        var orderId = request.OrderId;
+        _logger.Info("CreateDelivery called",
+            new { orderId, destinations = request.Destinations?.Count ?? 0 });
         var result = _deliveryService.CreateDelivery(request);
         if (!result.Success)
         {
@@ -62,12 +63,13 @@ public class DeliveryController : ControllerBase
 `CreateDelivery`が`result.Success = false`を返す条件（`DeliveryValidationException`を
 内部で捕捉）：
 
-- **必須項目が空**：`Address` / `RecipientName` / `RecipientPhone`、および
-  `Order.OrderId` / `Order.SenderName` / `Order.SenderAddress` /
-  `Order.RecipientName` / `Order.RecipientAddress`
-  （`Order`は省略しても既定のインスタンスが入るため、**省略＝空の注文**になります）
-- **制御文字を含む**：上記に `Notes` と `Package.Description` を加えた文字列項目すべて
-  （タブのみ許容）
+- **必須項目が空**：便の `OrderId` / `SenderName` / `SenderAddress`、および
+  各届け先の `Destinations[i].RecipientName` / `RecipientPhone` / `Address`
+- **届け先が無い**：`Destinations` が空（省略しても既定の空リストが入るため、
+  **省略＝届け先なし**になります）
+- **荷物が無い**：`Destinations[i].Packages` が空（1軒に複数口あってよい）
+- **制御文字を含む**：上記に `Notes`（便・届け先の両方）と
+  `Destinations[i].Packages[j].Description` を加えた文字列項目すべて（タブのみ許容）
 - **`IdempotencyKey` が未指定**（クライアントが1操作につき1つ生成するGuid）
 
 `result.Field` に項目名、`result.Message` に `"項目名: 内容"` が入ります。
@@ -93,24 +95,20 @@ POST /api/delivery/create
 Authorization: Bearer <ログインで取得したtoken>
 
 {
-  "address": "東京都千代田区1-1-1",
-  "recipientName": "山田太郎",
-  "recipientPhone": "090-0000-0000",
-  "order": {
-    "orderId": "ORD-001",
-    "senderName": "サンプル株式会社",
-    "senderAddress": "大阪府大阪市1-1-1",
-    "recipientName": "山田太郎",
-    "recipientAddress": "東京都千代田区1-1-1",
-    "requestedDeliveryDate": "2026-07-26T10:00:00"
-  },
-  "package": {
-    "weight": 1.5,
-    "height": 20,
-    "width": 15,
-    "depth": 10,
-    "description": "サンプル荷物"
-  },
+  "orderId": "ORD-001",
+  "senderName": "サンプル株式会社",
+  "senderAddress": "大阪府大阪市1-1-1",
+  "requestedDeliveryDate": "2026-07-26T10:00:00",
+  "destinations": [
+    {
+      "recipientName": "山田太郎",
+      "recipientPhone": "090-0000-0000",
+      "address": "東京都千代田区1-1-1",
+      "packages": [
+        { "weight": 1.5, "height": 20, "width": 15, "depth": 10, "description": "サンプル荷物" }
+      ]
+    }
+  ],
   "idempotencyKey": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 }
 ```

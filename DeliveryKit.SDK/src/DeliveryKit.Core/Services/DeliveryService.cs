@@ -60,14 +60,25 @@ public class DeliveryService : IDeliveryService
                 };
             }
 
+            // **回る順番はここで振る。** クライアントに番号を送らせると、重複や欠番を
+            // そのまま受け取ることになる（本家 DeliveryController.CreateDelivery と同じ方針）。
+            // 並びは受け取った配列の順。
             var info = new DeliveryInfo
             {
-                Address = request.Address,
-                RecipientName = request.RecipientName,
-                RecipientPhone = request.RecipientPhone,
+                OrderId = request.OrderId,
+                SenderName = request.SenderName,
+                SenderAddress = request.SenderAddress,
+                RequestedDeliveryDate = request.RequestedDeliveryDate,
                 Notes = request.Notes,
-                Order = request.Order,
-                Package = request.Package,
+                Destinations = request.Destinations.Select((d, index) => new DeliveryDestinationInfo
+                {
+                    SequenceNumber = index + 1,
+                    RecipientName = d.RecipientName,
+                    RecipientPhone = d.RecipientPhone,
+                    Address = d.Address,
+                    Notes = d.Notes,
+                    Packages = d.Packages,
+                }).ToList(),
             };
 
             _store[info.Id] = info;
@@ -89,44 +100,58 @@ public class DeliveryService : IDeliveryService
             : null;
     }
 
-    // 監査で発覚：**検証していたのは9つある文字列項目のうち3つだけだった。**
+    // 監査で発覚：**検証していたのは文字列項目のうち3つだけだった。**
     // 直下の Address / RecipientName / Notes は制御文字を弾いていたのに、
-    // すぐ隣の RecipientPhone と、Order / Package の中の文字列は素通りだった。
+    // すぐ隣の RecipientPhone と、入れ子のDTOの中の文字列は素通りだった。
     //
     // このサンプルの狙いは「入力検証という型を示すこと」なので、一部だけ守って
     // あると **読んだ人はそれを網羅だと受け取る。** 送り状にもログにも出る値で、
     // 弾く対象になる理由は Address とまったく同じ。
     //
-    // 必須項目は本家 DeliveryKit.Core の DeliveryService と揃えている
-    // （Address / RecipientName / RecipientPhone に加えて、注文の
-    //   OrderId / SenderName / SenderAddress / RecipientName / RecipientAddress）。
+    // **項目の並びは本家に合わせてある**（便に1つの OrderId / SenderName /
+    // SenderAddress と、届け先ごとの RecipientName / RecipientPhone / Address）。
+    // 届け先が空の配列である場合も弾く——本家は
+    // 「届け先を1つ以上指定してください。」（field: destinations）を返す。
+    // **項目名は本家と同じ `destinations[i].xxx` の形**にする。サンプルを見て
+    // 画面を作る人は、この名前でどの欄を赤くするかを決めるため。
     private static void Validate(CreateDeliveryRequest request)
     {
-        RequireNonEmpty(request.Address, nameof(request.Address));
-        RequireNonEmpty(request.RecipientName, nameof(request.RecipientName));
-        RequireNonEmpty(request.RecipientPhone, nameof(request.RecipientPhone));
+        RequireNonEmpty(request.OrderId, nameof(request.OrderId));
+        RequireNonEmpty(request.SenderName, nameof(request.SenderName));
+        RequireNonEmpty(request.SenderAddress, nameof(request.SenderAddress));
 
-        RejectControlCharacters(request.Address, nameof(request.Address));
-        RejectControlCharacters(request.RecipientName, nameof(request.RecipientName));
-        RejectControlCharacters(request.RecipientPhone, nameof(request.RecipientPhone));
+        RejectControlCharacters(request.OrderId, nameof(request.OrderId));
+        RejectControlCharacters(request.SenderName, nameof(request.SenderName));
+        RejectControlCharacters(request.SenderAddress, nameof(request.SenderAddress));
         RejectControlCharacters(request.Notes, nameof(request.Notes));
 
-        // Order は `new()` が既定値なので、丸ごと省略しても null にはならない。
-        // 検証が無いと **送り主も届け先も空のまま「作成に成功しました」が返る。**
-        var order = request.Order;
-        RequireNonEmpty(order.OrderId, "Order.OrderId");
-        RequireNonEmpty(order.SenderName, "Order.SenderName");
-        RequireNonEmpty(order.SenderAddress, "Order.SenderAddress");
-        RequireNonEmpty(order.RecipientName, "Order.RecipientName");
-        RequireNonEmpty(order.RecipientAddress, "Order.RecipientAddress");
+        // Destinations は `new()` が既定値なので、丸ごと省略しても null にはならない。
+        // 検証が無いと **届け先が1軒も無いまま「作成に成功しました」が返る。**
+        if (request.Destinations.Count == 0)
+            throw new DeliveryValidationException("Destinations", "must contain at least one destination.");
 
-        RejectControlCharacters(order.OrderId, "Order.OrderId");
-        RejectControlCharacters(order.SenderName, "Order.SenderName");
-        RejectControlCharacters(order.SenderAddress, "Order.SenderAddress");
-        RejectControlCharacters(order.RecipientName, "Order.RecipientName");
-        RejectControlCharacters(order.RecipientAddress, "Order.RecipientAddress");
+        for (var i = 0; i < request.Destinations.Count; i++)
+        {
+            var destination = request.Destinations[i];
+            var at = $"Destinations[{i}]";
 
-        RejectControlCharacters(request.Package.Description, "Package.Description");
+            RequireNonEmpty(destination.RecipientName, $"{at}.RecipientName");
+            RequireNonEmpty(destination.RecipientPhone, $"{at}.RecipientPhone");
+            RequireNonEmpty(destination.Address, $"{at}.Address");
+
+            RejectControlCharacters(destination.RecipientName, $"{at}.RecipientName");
+            RejectControlCharacters(destination.RecipientPhone, $"{at}.RecipientPhone");
+            RejectControlCharacters(destination.Address, $"{at}.Address");
+            RejectControlCharacters(destination.Notes, $"{at}.Notes");
+
+            // 本家は「荷物を1つ以上指定してください。」
+            // （field: destinations[i].packages）を返す。1軒に複数口あってよい。
+            if (destination.Packages.Count == 0)
+                throw new DeliveryValidationException($"{at}.Packages", "must contain at least one package.");
+
+            for (var p = 0; p < destination.Packages.Count; p++)
+                RejectControlCharacters(destination.Packages[p].Description, $"{at}.Packages[{p}].Description");
+        }
 
         if (request.IdempotencyKey is null || request.IdempotencyKey == Guid.Empty)
             throw new DeliveryValidationException(
