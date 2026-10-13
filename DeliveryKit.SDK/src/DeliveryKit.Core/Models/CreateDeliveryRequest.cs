@@ -34,6 +34,17 @@ public class CreateDeliveryRequest
     public string? Notes { get; set; }
 
     /// <summary>
+    /// 配送を委託する配送業者の識別子（"yamato" / "sagawa" / "japanpost"）。
+    ///
+    /// **本家APIでは省略できない。** 空文字や未対応の値を送ると
+    /// 「対応していないキャリアです。」で弾かれる（CarrierClientFactory.GetClient）。
+    /// このSDKは配送業者への登録そのものを行わない簡易実装だが、
+    /// **契約として必要な項目なので持たせてある**——ここに無いと、
+    /// サンプルどおりに書いた顧客が本家で弾かれる。
+    /// </summary>
+    public string CarrierId { get; set; } = string.Empty;
+
+    /// <summary>
     /// **届け先（1つ以上）。** 本家は受け取った配列の順に回る番号を振る。
     /// 1台の車が1日に何十軒も回る実際の形に合わせてある。
     /// </summary>

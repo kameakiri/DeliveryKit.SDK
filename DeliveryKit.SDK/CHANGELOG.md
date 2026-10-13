@@ -22,6 +22,7 @@
   - `CreateDeliveryDestinationRequest` が増えました
   - `DeliveryInfo` も届け先の一覧（`Destinations`）を持ちます。
     **回る順番（`SequenceNumber`）は受け取った配列の順にサーバーが振ります**
+  - **`CarrierId` を足しました**（`yamato` / `sagawa` / `japanpost`）。本家は空文字や未対応の値を「対応していないキャリアです。」で断るため、**以前のSDKの形のままでは本家に通りませんでした**
   - 検証の項目名が `Destinations[0].Address` の形になりました
     （画面がどの欄を赤くするかを決められるようにするため）
 

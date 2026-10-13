@@ -63,7 +63,7 @@ public class DeliveryController : ControllerBase
 `CreateDelivery`が`result.Success = false`を返す条件（`DeliveryValidationException`を
 内部で捕捉）：
 
-- **必須項目が空**：便の `OrderId` / `SenderName` / `SenderAddress`、および
+- **必須項目が空**：便の `OrderId` / `SenderName` / `SenderAddress` / `CarrierId`、および
   各届け先の `Destinations[i].RecipientName` / `RecipientPhone` / `Address`
 - **届け先が無い**：`Destinations` が空（省略しても既定の空リストが入るため、
   **省略＝届け先なし**になります）
@@ -99,6 +99,7 @@ Authorization: Bearer <ログインで取得したtoken>
   "senderName": "サンプル株式会社",
   "senderAddress": "大阪府大阪市1-1-1",
   "requestedDeliveryDate": "2026-07-26T10:00:00",
+  "carrierId": "yamato",
   "destinations": [
     {
       "recipientName": "山田太郎",

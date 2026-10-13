@@ -21,6 +21,7 @@ public class Program
             SenderName = "サンプル株式会社",
             SenderAddress = "大阪府大阪市1-1-1",
             RequestedDeliveryDate = DateTime.UtcNow,
+            CarrierId = "yamato",
             Notes = "午前中の配達希望",
             Destinations = new List<CreateDeliveryDestinationRequest>
             {

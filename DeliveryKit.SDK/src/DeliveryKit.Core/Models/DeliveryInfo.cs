@@ -19,6 +19,9 @@ public class DeliveryInfo
     /// <summary>便全体にかかる備考。軒ごとの事情は届け先側の Notes にある。</summary>
     public string? Notes { get; set; }
 
+    /// <summary>配送業者の識別子（"yamato" / "sagawa" / "japanpost"）。</summary>
+    public string CarrierId { get; set; } = string.Empty;
+
     /// <summary>
     /// 届け先（1つ以上）。**受け取った順に回る番号が振られる。**
     ///

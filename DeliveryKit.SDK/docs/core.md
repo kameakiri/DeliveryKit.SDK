@@ -18,7 +18,8 @@ DeliveryKit.Core は配送ロジックを提供する SDK コンポーネント�
 ## Features
 
 - 配送作成（`CreateDelivery`）：必須項目と制御文字混入のチェックを行う
-  - 必須（便）：`OrderId` / `SenderName` / `SenderAddress`
+  - 必須（便）：`OrderId` / `SenderName` / `SenderAddress` / `CarrierId`
+    （`CarrierId` は `yamato` / `sagawa` / `japanpost` のいずれか。**本家でも省略できない**——このSDKは業者へ登録しないが、契約として要る）
   - 必須（届け先）：`Destinations` が1件以上あり、各件の `RecipientName` /
     `RecipientPhone` / `Address` が空でなく、`Packages` が1件以上ある
     （`Destinations`は省略しても既定の空リストが入るため、**省略＝届け先なし**になる。
@@ -52,7 +53,7 @@ public interface IDeliveryService
 ### Models
 
 - `CreateDeliveryRequest`（`OrderId`, `SenderName`, `SenderAddress`,
-  `RequestedDeliveryDate`, `Notes?`, `Destinations: List<CreateDeliveryDestinationRequest>`,
+  `RequestedDeliveryDate`, `Notes?`, `CarrierId`, `Destinations: List<CreateDeliveryDestinationRequest>`,
   `IdempotencyKey: Guid?`）
 - `CreateDeliveryDestinationRequest`（`RecipientName`, `RecipientPhone`, `Address`,
   `Notes?`, `Packages: List<DeliveryPackageRequest>`）
@@ -81,6 +82,7 @@ var result = service.CreateDelivery(new CreateDeliveryRequest
     SenderName = "サンプル株式会社",
     SenderAddress = "大阪府大阪市1-1-1",
     RequestedDeliveryDate = DateTime.UtcNow,
+    CarrierId = "yamato",
     IdempotencyKey = Guid.NewGuid(),
     Destinations = new List<CreateDeliveryDestinationRequest>
     {

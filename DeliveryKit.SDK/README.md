@@ -107,6 +107,7 @@ Authorization: Bearer <token>
   "senderName": "サンプル株式会社",
   "senderAddress": "大阪府大阪市1-1-1",
   "requestedDeliveryDate": "2026-07-26T10:00:00",
+  "carrierId": "yamato",
   "notes": "午前中の配達希望",
   "destinations": [
     {

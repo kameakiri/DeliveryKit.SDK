@@ -69,6 +69,7 @@ public class DeliveryService : IDeliveryService
                 SenderName = request.SenderName,
                 SenderAddress = request.SenderAddress,
                 RequestedDeliveryDate = request.RequestedDeliveryDate,
+                CarrierId = request.CarrierId,
                 Notes = request.Notes,
                 Destinations = request.Destinations.Select((d, index) => new DeliveryDestinationInfo
                 {
@@ -125,6 +126,17 @@ public class DeliveryService : IDeliveryService
         RejectControlCharacters(request.SenderAddress, nameof(request.SenderAddress));
         RejectControlCharacters(request.Notes, nameof(request.Notes));
 
+        // **配送業者の識別子は本家で必須。** このSDKは業者への登録を行わないが、
+        // 契約として要る項目なので、ここでも弾いておく（本家 CarrierClientFactory.
+        // GetClient は空文字・未対応の値を「対応していないキャリアです。」で断る）。
+        // 対応している識別子を書き並べているのは、サンプルを読んだ人が
+        // **何を送ればよいのか分かるようにするため。**
+        RequireNonEmpty(request.CarrierId, nameof(request.CarrierId));
+        if (!SupportedCarrierIds.Contains(request.CarrierId.ToLowerInvariant()))
+            throw new DeliveryValidationException(
+                nameof(request.CarrierId),
+                $"must be one of: {string.Join(", ", SupportedCarrierIds)}.");
+
         // Destinations は `new()` が既定値なので、丸ごと省略しても null にはならない。
         // 検証が無いと **届け先が1軒も無いまま「作成に成功しました」が返る。**
         if (request.Destinations.Count == 0)
@@ -158,6 +170,12 @@ public class DeliveryService : IDeliveryService
                 nameof(request.IdempotencyKey),
                 "must be specified (a client-generated Guid, one per user-initiated create action).");
     }
+
+    /// <summary>
+    /// 本家が対応している配送業者の識別子。
+    /// **本家の CarrierNames / 各 ICarrierClient の CarrierId と揃えること。**
+    /// </summary>
+    private static readonly string[] SupportedCarrierIds = ["yamato", "sagawa", "japanpost"];
 
     private static void RequireNonEmpty(string value, string fieldName)
     {
