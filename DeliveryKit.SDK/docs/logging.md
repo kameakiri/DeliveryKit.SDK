@@ -14,9 +14,16 @@ DeliveryKit.Logging は、配送システム向けのログ基盤です。
   `Info` / `Warn` はその名前、`Error` だけは常に `error` へ書きます。
   用途ごとにインスタンスを分けてください（例: `new DeliveryLogger(category: "audit")`）。
 
-  なお `DeliveryKit.LogArchiver` が走査するのは
-  `core` / `api` / `error` / `security` / `audit` / `access` の6つです。
-  **これ以外の名前を使うと、隔離も削除もされません。**
+  `DeliveryKit.LogArchiver` は、**出力先の直下にあるディレクトリを全て走査します。**
+  どの名前を使っても隔離・削除の対象になります。
+
+  > **ここには以前「走査するのは `core` / `api` / `error` / `security` /
+  > `audit` / `access` の6つで、これ以外の名前を使うと隔離も削除もされません」と
+  > 書いてありました。もう当てはまりません。**
+  > 決め打ちの一覧はアーカイバ側から外しました（`docs/archiver.md` の
+  > 「How It Works」1項）。**古い記述は、使える名前を実際より狭く見せていました**
+  > ——自作のカテゴリは隔離されないと読めるため、分けたい用途でも
+  > 6つの名前に寄せる動機になります。
 - 日本時間（JST）でのタイムスタンプ
 
 ## Interface
