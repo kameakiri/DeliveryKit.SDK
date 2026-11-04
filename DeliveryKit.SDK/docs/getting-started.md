@@ -28,6 +28,33 @@ builder.Services.AddSingleton<IDeliveryLogger>(sp =>
 JWT認証の組み方は `DeliveryKit.ApiTemplate`（`Program.cs` / `Controllers/AuthController.cs`）を
 参照してください。
 
+### 署名鍵（`Jwt:Key`）
+
+**開発環境では設定しなくても起動します。** `DeliveryKit.ApiTemplate` は未設定のとき
+一時鍵を自動生成し、次の警告を出します。
+
+```
+[WARN] Jwt:Key が未設定のため、開発用の一時鍵を自動生成しました。
+```
+
+**開発環境以外では、未設定だと起動しません**（例外で止まります）。
+
+```
+System.InvalidOperationException: Jwt:Key が設定されていません。
+環境変数 Jwt__Key 等で本番用の署名鍵を設定してください。
+```
+
+| | |
+|---|---|
+| 設定の仕方 | 環境変数 `Jwt__Key`（`:` ではなく `__` 2つ）、または `appsettings.json` の `Jwt:Key` |
+| 長さ | **32バイト以上**。短いと起動時に弾かれます |
+| 置き場 | **リポジトリにコミットしないでください。** Key Vault 等から供給します |
+
+> **一時鍵は再起動のたびに変わります。** 発行済みのトークンは再起動で使えなく
+> なるので、動作確認の途中で「急に401になった」ときはこれを疑ってください。
+
+下の「5. Test with curl」は開発環境を前提にしています。
+
 ## 4. Use in Controller
 
 ```csharp
