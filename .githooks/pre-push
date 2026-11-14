@@ -1,0 +1,61 @@
+#!/usr/bin/env sh
+# 押す前に、**CIと同じもの**を手元で走らせる（#2）。
+#
+# ## なぜ要るか
+#
+# 切符#1 がそれ。`npm run lint` の失敗が **2026-11-01から6コミット潜った。**
+# CIは走らせていたので main は赤だったはずだが、
+# **押す前に気づく経路が、人の記憶しか無かった**（この端末には `gh` も無い）。
+#
+# ## 何を走らせるか
+#
+# `.github/workflows/ci.yml` を読んで、その `run:` をそのまま走らせる。
+# **書き写さない**ので、CIを直してもこちらが古くならない。
+# 手元で走らせられないもの（アクション・secrets・遅いもの）は
+# **名前と理由を出して飛ばす。黙って飛ばさない。**
+#
+# 置き換えの表は D:/slack-bridge/ci-replay.json。
+#
+# ## 止まったとき
+#
+# 直してから押す。どうしても押したいときは `git push --no-verify`。
+# **黙って飛ばせる形にはしない**——打った本人が、確かめていないと分かるように。
+set -u
+
+REPLAY="D:/slack-bridge/scripts/replay-ci.ps1"
+if [ ! -f "$REPLAY" ]; then
+  echo "[pre-push] $REPLAY が無いので、確かめずに押します。" >&2
+  exit 0
+fi
+
+# GitHubのリポジトリ名を remote から取る（手元のフォルダ名とは一致しない）
+url=$(git remote get-url origin 2>/dev/null || echo "")
+repo=$(printf '%s' "$url" | sed -E 's#.*/([^/]+)$#\1#; s#\.git$##')
+if [ -z "$repo" ]; then
+  echo "[pre-push] origin が無いので、確かめずに押します。" >&2
+  exit 0
+fi
+
+echo "[pre-push] $repo のCIを手元で走らせます（止めたいときは Ctrl+C）…" >&2
+powershell -NoProfile -ExecutionPolicy Bypass -File "$REPLAY" -Repo "$repo" -Path "$(pwd -W 2>/dev/null || pwd)" >&2
+code=$?
+
+if [ "$code" -eq 0 ]; then
+  echo "[pre-push] 通りました。押します。" >&2
+  exit 0
+fi
+
+if [ "$code" -eq 2 ]; then
+  echo "" >&2
+  echo "[pre-push] **手元で確かめられる手順がありません。** そのまま押します。" >&2
+  echo "           CIの結果はActionsの画面で見てください。" >&2
+  exit 0
+fi
+
+echo "" >&2
+echo "[pre-push] **押すのを止めました。** 上の検査が落ちています。" >&2
+echo "" >&2
+echo "  直してから押してください。" >&2
+echo "  どうしても押したいとき: git push --no-verify" >&2
+echo "" >&2
+exit 1
