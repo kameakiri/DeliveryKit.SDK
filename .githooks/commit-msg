@@ -1,0 +1,111 @@
+#!/bin/sh
+# コミットの文にレッドマインのチケット番号を要求する（#3）。
+#
+# **番号が無ければ拒む。在る番号なら、実在するかまで確かめる。**
+#
+# ## なぜ `refs` を必須にするか
+#
+# レッドマインの `commit_ref_keywords` は `refs,references,IssueID` で、
+# **裸の `#1` は結ばれない。** 結ばれない形を通すと
+# 「番号は書いたのにチケットから辿れない」が起きる。
+#
+# ## レッドマインが落ちているとき
+#
+# **警告を出して通す。** 止めると「Redmineを起動しないとコミットできない」になり、
+# hook を外す動機になる。
+#
+# ## 設定（クローンごとに1回）
+#
+#   git config core.hooksPath .githooks
+#
+# 置き場所を変えたいとき
+#   git config redmine.url http://127.0.0.1:3000
+#   git config redmine.apikeyfile D:/redmine/secrets/api-key.txt
+#
+# ## 逃げ道
+#
+#   GIT_SKIP_TICKET_CHECK=1 git commit ...
+set -u
+
+MSG_FILE="$1"
+[ -f "$MSG_FILE" ] || exit 0
+
+# コメント行（#で始まる行）を落としてから見る。
+# **落とさないと git が付ける案内文の中の `#` に当たる。**
+BODY=$(grep -v '^#' "$MSG_FILE" 2>/dev/null || true)
+
+die() {
+  echo "" >&2
+  echo "[commit-msg] **コミットを止めました。**" >&2
+  echo "  $1" >&2
+  echo "" >&2
+  echo "  チケット番号を本文に入れてください（件名の行ではなく、1行空けて下）。" >&2
+  echo "" >&2
+  echo "    refs #12     チケット12に差分を結ぶ" >&2
+  echo "    fixes #12    結んだうえで終了にする" >&2
+  echo "" >&2
+  echo "  チケットが無いなら先に立ててください:" >&2
+  echo "    bash D:/redmine/scripts/new-issue.sh <本文.json>" >&2
+  echo "" >&2
+  echo "  どうしても通したいとき: GIT_SKIP_TICKET_CHECK=1 git commit ..." >&2
+  echo "" >&2
+  exit 1
+}
+
+if [ "${GIT_SKIP_TICKET_CHECK:-}" = "1" ]; then
+  echo "[commit-msg] GIT_SKIP_TICKET_CHECK=1 なので番号を見ません。" >&2
+  exit 0
+fi
+
+# git が自分で作る文は見ない。
+case "$BODY" in
+  Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
+esac
+
+# `refs #12` / `fixes #12` などの形を拾う（前置きの語を必須にする）。
+NUMS=$(printf '%s' "$BODY" \
+  | grep -oiE '(refs|references|issueid|fixes|closes|fixed)[[:space:]]+#[0-9]+' \
+  | grep -oE '[0-9]+' | sort -u)
+
+if [ -z "$NUMS" ]; then
+  if printf '%s' "$BODY" | grep -qE '#[0-9]+'; then
+    die "番号は在りますが、前置きの語がありません（裸の #12 はレッドマインで結ばれません）。"
+  fi
+  die "チケット番号がありません。"
+fi
+
+URL=$(git config --get redmine.url || true)
+[ -n "$URL" ] || URL="http://127.0.0.1:3000"
+KEYFILE=$(git config --get redmine.apikeyfile || true)
+[ -n "$KEYFILE" ] || KEYFILE="D:/redmine/secrets/api-key.txt"
+
+if [ ! -f "$KEYFILE" ]; then
+  echo "[commit-msg] **APIの鍵が見つかりません**（$KEYFILE）。実在の確認は飛ばします。" >&2
+  echo "            番号の形は合っています: $(printf '%s' "$NUMS" | tr '\n' ' ')" >&2
+  exit 0
+fi
+KEY=$(tr -d ' \t\r\n' < "$KEYFILE")
+
+for n in $NUMS; do
+  CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 4 \
+    -H "X-Redmine-API-Key: $KEY" "$URL/issues/$n.json" 2>/dev/null || echo "000")
+  case "$CODE" in
+    200)
+      ;;
+    404)
+      die "#$n はレッドマインに在りません（打ち間違いの疑い）。"
+      ;;
+    000)
+      echo "[commit-msg] **レッドマインに繋がりません**（$URL）。実在の確認は飛ばします。" >&2
+      echo "            番号の形は合っています: $(printf '%s' "$NUMS" | tr '\n' ' ')" >&2
+      exit 0
+      ;;
+    *)
+      echo "[commit-msg] レッドマインが $CODE を返しました。実在の確認は飛ばします。" >&2
+      exit 0
+      ;;
+  esac
+done
+
+echo "[commit-msg] チケットを確かめました: $(printf '%s' "$NUMS" | sed 's/^/#/' | tr '\n' ' ')" >&2
+exit 0
