@@ -11,6 +11,11 @@
          した型が衝突する(CS0436)。このプロジェクトはProjectReferenceのみで完結する
          ため、既定の自動収集を無効化する。 -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- 版番号はここに置く。以前は Directory.Build.props にあったが、あちらは
+         全.NETリポジトリ共通の中身で上書きされるファイルで、上書きのときに
+         この行だけ消え、CIの版番号検査が止まった。リポジトリ固有の値は
+         共有ファイルに置かない。CHANGELOG.md との突き合わせは ci.yml を参照。 -->
+    <Version>0.4.0</Version>
   </PropertyGroup>
 
   <!-- 以前は <None Include> でIDE上に見せているだけで、実際にはどのコードも

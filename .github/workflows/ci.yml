@@ -41,21 +41,29 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # Directory.Build.props の Version と CHANGELOG.md の一番上の見出しが
+      # DeliveryKit.SDK.csproj の Version と CHANGELOG.md の一番上の見出しが
       # 一致していることを確かめる。片方だけ動かすと、利用者が見る番号と
       # 変更内容の説明がずれる（この2つは別の場所に書かざるを得ないので、
       # 機械で結びつける）。
+      #
+      # grep に `|| true` を付けるのは、見つからなかったときに bash -e で
+      # その場で終わらせず、下の案内文を必ずログに出すため。以前は版番号の行が
+      # 消えたとき「exit code 1」だけが残り、何が起きたか読めなかった。
       - name: Check version matches CHANGELOG
         run: |
-          version=$(grep -oPm1 '(?<=<Version>)[^<]+' Directory.Build.props)
-          changelog=$(grep -oPm1 '^## \K[0-9]+\.[0-9]+\.[0-9]+' DeliveryKit.SDK/CHANGELOG.md)
-          echo "[check-version] Directory.Build.props=$version CHANGELOG.md=$changelog"
-          if [ -z "$version" ] || [ -z "$changelog" ]; then
-            echo "[check-version] どちらかからバージョンを読み取れませんでした。" >&2
+          version=$(grep -oPm1 '(?<=<Version>)[^<]+' DeliveryKit.SDK/DeliveryKit.SDK.csproj || true)
+          changelog=$(grep -oPm1 '^## \K[0-9]+\.[0-9]+\.[0-9]+' DeliveryKit.SDK/CHANGELOG.md || true)
+          echo "[check-version] DeliveryKit.SDK.csproj=$version CHANGELOG.md=$changelog"
+          if [ -z "$version" ]; then
+            echo "[check-version] DeliveryKit.SDK/DeliveryKit.SDK.csproj に <Version> が見つかりません。行が消えていないか確かめてください。" >&2
+            exit 1
+          fi
+          if [ -z "$changelog" ]; then
+            echo "[check-version] DeliveryKit.SDK/CHANGELOG.md の先頭に「## x.y.z」の見出しが見つかりません。" >&2
             exit 1
           fi
           if [ "$version" != "$changelog" ]; then
-            echo "[check-version] 一致していません。CHANGELOG.md に見出しを足してから Directory.Build.props を合わせてください。" >&2
+            echo "[check-version] 一致していません。CHANGELOG.md に見出しを足してから DeliveryKit.SDK.csproj を合わせてください。" >&2
             exit 1
           fi
 
