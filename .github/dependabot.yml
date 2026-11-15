@@ -9,6 +9,24 @@ updates:
     directory: "/DeliveryKit.SDK"
     schedule:
       interval: "weekly"
+    groups:
+      # **ランタイムに追従する一式は、1つのPRでまとめて上げる。**
+      #
+      # 別々に上がると降格（NU1605）でビルドが止まる。2026-11-15に2回踏んだ
+      # （切符#36）：EF Core だけ 10.0.15 にしたら `Microsoft.Extensions.*` が
+      # 10.0.12 のままで7つのCoreが落ち、`AspNetCore.OpenApi` を上げたら
+      # `Microsoft.OpenApi` が 2.12.0 のままでテストが落ちた。
+      #
+      # **1つのPRにすれば、その形が生まれない。** 版の系統が違うものが
+      # 混ざることはあるが（`Extensions.Http.Resilience` は 9.x）、
+      # まとめるのはPRの単位だけなので害は無い。
+      dotnet-runtime:
+        patterns:
+          - "Microsoft.AspNetCore.*"
+          - "Microsoft.EntityFrameworkCore*"
+          - "Microsoft.Extensions.*"
+          - "Microsoft.OpenApi"
+          - "System.Security.Cryptography.*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
