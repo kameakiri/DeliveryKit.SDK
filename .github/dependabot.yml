@@ -38,7 +38,10 @@ updates:
       # `Microsoft.Extensions.Http.Resilience` は 9.x にいて、.NET 10 に合う
       # 10.x への上げまで止まってしまう（9.x は .NET 9 の系統で、もう更新が無い）。
       #
-      # **既に開いているPRは、ここを変えても自動では閉じない**（文書に記載なし）。
+      # 既に開いていた .NET 11 系のPRは、**Dependabot が次の実行で自分で閉じた**
+      # （2026-11-16に確認。「no longer being updated by Dependabot」とコメントして
+      # 閉じていた）。ただし公式文書には書かれていないので、当てにしすぎないこと。
+      # 閉じるまでの間（週1の実行まで）はマージできてしまうので、CIでも守っている。
       # **.NET 11 へ移るときは、この ignore を外すこと。**
       - dependency-name: "Microsoft.AspNetCore.*"
         versions: ["11.*", "12.*", "13.*"]
