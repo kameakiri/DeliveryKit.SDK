@@ -27,6 +27,32 @@ updates:
           - "Microsoft.Extensions.*"
           - "Microsoft.OpenApi"
           - "System.Security.Cryptography.*"
+    ignore:
+      # **製品は .NET 10 に留める。** 本番リリース後2年ほどが目安
+      # （2026-11-16に決定。切符#37）。.NET 11 以降の版は Dependabot にPRを出させない。
+      #
+      # 範囲は Dependabot の公式文書が NuGet の例に挙げている `7.*` の形で書く
+      # （`>= 11` が NuGet で通るかは文書に書かれていない）。
+      #
+      # `update-types: version-update:semver-major` で一括に止めない理由：
+      # `Microsoft.Extensions.Http.Resilience` は 9.x にいて、.NET 10 に合う
+      # 10.x への上げまで止まってしまう（9.x は .NET 9 の系統で、もう更新が無い）。
+      #
+      # **既に開いているPRは、ここを変えても自動では閉じない**（文書に記載なし）。
+      # **.NET 11 へ移るときは、この ignore を外すこと。**
+      - dependency-name: "Microsoft.AspNetCore.*"
+        versions: ["11.*", "12.*", "13.*"]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        versions: ["11.*", "12.*", "13.*"]
+      - dependency-name: "Microsoft.Extensions.*"
+        versions: ["11.*", "12.*", "13.*"]
+      - dependency-name: "System.Security.Cryptography.*"
+        versions: ["11.*", "12.*", "13.*"]
+      # Microsoft.OpenApi の版は .NET と揃っていないが、AspNetCore.OpenApi 10.x が
+      # `>= 2.13.0 && < 3.0.0` を要求する（2026-11-15に NU1605 で実際に止まった）。
+      # 大版を上げると必ずビルドが止まるので、大版だけ止める。
+      - dependency-name: "Microsoft.OpenApi"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
