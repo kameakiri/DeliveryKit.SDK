@@ -78,6 +78,7 @@ public class DeliveryService : IDeliveryService
                     RecipientPhone = d.RecipientPhone,
                     Address = d.Address,
                     Notes = d.Notes,
+                    ScheduledTime = d.ScheduledTime,
                     Packages = d.Packages,
                 }).ToList(),
             };

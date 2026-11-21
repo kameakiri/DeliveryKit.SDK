@@ -15,7 +15,7 @@
          全.NETリポジトリ共通の中身で上書きされるファイルで、上書きのときに
          この行だけ消え、CIの版番号検査が止まった。リポジトリ固有の値は
          共有ファイルに置かない。CHANGELOG.md との突き合わせは ci.yml を参照。 -->
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
   </PropertyGroup>
 
   <!-- 以前は <None Include> でIDE上に見せているだけで、実際にはどのコードも

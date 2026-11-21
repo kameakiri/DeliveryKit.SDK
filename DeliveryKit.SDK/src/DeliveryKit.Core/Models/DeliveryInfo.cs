@@ -51,5 +51,9 @@ public class DeliveryDestinationInfo
     public string RecipientPhone { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string? Notes { get; set; }
+
+    /// <summary>配送の予定時刻（時:分。任意）。</summary>
+    public TimeOnly? ScheduledTime { get; set; }
+
     public List<DeliveryPackageRequest> Packages { get; set; } = new();
 }

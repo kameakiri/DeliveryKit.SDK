@@ -70,6 +70,12 @@ public class CreateDeliveryDestinationRequest
     /// <summary>この届け先についての備考（置き配の指定など）。</summary>
     public string? Notes { get; set; }
 
+    /// <summary>
+    /// 配送の予定時刻（時:分。任意）。日付は便の希望配送日。
+    /// 本家ではドライバーのアプリの「今日の仕事」がこの時刻の順に並ぶ（0.5.0で追加）。
+    /// </summary>
+    public TimeOnly? ScheduledTime { get; set; }
+
     /// <summary>この届け先へ渡す荷物（1つ以上）。1軒に複数口あってよい。</summary>
     public List<DeliveryPackageRequest> Packages { get; set; } = new();
 }

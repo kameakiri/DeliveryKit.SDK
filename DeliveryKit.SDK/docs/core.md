@@ -56,7 +56,8 @@ public interface IDeliveryService
   `RequestedDeliveryDate`, `Notes?`, `CarrierId`, `Destinations: List<CreateDeliveryDestinationRequest>`,
   `IdempotencyKey: Guid?`）
 - `CreateDeliveryDestinationRequest`（`RecipientName`, `RecipientPhone`, `Address`,
-  `Notes?`, `Packages: List<DeliveryPackageRequest>`）
+  `Notes?`, `ScheduledTime?`, `Packages: List<DeliveryPackageRequest>`）
+  — `ScheduledTime` は配送の予定時刻（時:分。任意）。日付は便の希望配送日
   — **回る順番は受け取らない。** 配列の順に、サーバーが番号を振る
 - `DeliveryPackageRequest`（`Weight`, `Height`, `Width`, `Depth`, `Description`）
 - `DeliveryInfo`（保存済み配送情報。`Id`, 上記フィールド一式, `Status`, `CreatedAt`）
